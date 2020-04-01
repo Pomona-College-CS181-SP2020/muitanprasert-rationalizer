@@ -1,9 +1,5 @@
 language: elm
-elm:
-  - elm0.19.0
-
-before_install:
-  - npm install -g uglify-js@3.4.9
+elm: 0.19.1
 
 before_script:
   - elm-format src/ --yes
