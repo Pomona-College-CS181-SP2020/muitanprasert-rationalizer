@@ -4,7 +4,3 @@ elm:
 
 before_install:
   - npm install -g uglify-js@3.4.9
-
-script:
-  - make clean
-  - make
