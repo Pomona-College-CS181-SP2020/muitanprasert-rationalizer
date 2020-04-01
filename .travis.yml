@@ -8,3 +8,6 @@ before_script:
 cache:
   directories: # so subsequent builds run faster
     - $HOME/.npm
+    
+notifications:
+  email: false

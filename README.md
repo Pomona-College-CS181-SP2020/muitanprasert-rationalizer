@@ -10,3 +10,6 @@ Implemented in Elm (tentative).
 * Parse input strings in the amount, unit, and the rest (ingredient)
 * Determine if an input is scalable (by unit)
 * Input number of servings (floating points) and display in-place the scaled quantities with appropriate units
+
+## Notes
+* Travis CI building with version 0.19.0
