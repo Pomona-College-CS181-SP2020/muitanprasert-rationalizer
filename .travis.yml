@@ -6,4 +6,8 @@ before_install:
   - npm install -g uglify-js@3.4.9
 
 before_script:
-  - elm-format src/
+  - elm-format src/ --yes
+
+cache:
+  directories: # so subsequent builds run faster
+    - $HOME/.npm
