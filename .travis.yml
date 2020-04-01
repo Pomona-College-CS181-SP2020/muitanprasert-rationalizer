@@ -4,3 +4,6 @@ elm:
 
 before_install:
   - npm install -g uglify-js@3.4.9
+
+before_script:
+  - elm-format src/
