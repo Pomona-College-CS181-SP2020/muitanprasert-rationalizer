@@ -4392,6 +4392,7 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 {
 	return a >>> offset;
 });
+var $elm$core$Basics$False = {$: 'False'};
 var $elm$core$Array$Array_elm_builtin = F4(
 	function (a, b, c, d) {
 		return {$: 'Array_elm_builtin', a: a, b: b, c: c, d: d};
@@ -4488,7 +4489,7 @@ var $elm$core$Basics$toFloat = _Basics_toFloat;
 var $elm$core$Array$shiftStep = $elm$core$Basics$ceiling(
 	A2($elm$core$Basics$logBase, 2, $elm$core$Array$branchFactor));
 var $elm$core$Array$empty = A4($elm$core$Array$Array_elm_builtin, 0, $elm$core$Array$shiftStep, $elm$core$Elm$JsArray$empty, $elm$core$Elm$JsArray$empty);
-var $author$project$HomePage$init = {content: $elm$core$Array$empty, scale: 1, temp: ''};
+var $author$project$HomePage$init = {content: $elm$core$Array$empty, modalOn: false, scale: 1.0, temp: ''};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -4510,7 +4511,6 @@ var $elm$core$Result$Ok = function (a) {
 var $elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
-var $elm$core$Basics$False = {$: 'False'};
 var $elm$core$Basics$add = _Basics_add;
 var $elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
@@ -5204,6 +5204,9 @@ var $elm$browser$Browser$sandbox = function (impl) {
 		});
 };
 var $author$project$HomePage$Clear = {$: 'Clear'};
+var $author$project$HomePage$ShowWarning = function (a) {
+	return {$: 'ShowWarning', a: a};
+};
 var $elm$core$Elm$JsArray$appendN = _JsArray_appendN;
 var $elm$core$Elm$JsArray$slice = _JsArray_slice;
 var $elm$core$Array$appendHelpBuilder = F2(
@@ -5637,6 +5640,16 @@ var $elm$core$Array$fromList = function (list) {
 		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
 	}
 };
+var $elm$core$String$any = _String_any;
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$HomePage$illegalInput = A2(
+	$elm$core$List$foldr,
+	F2(
+		function (x, xs) {
+			return (!A2($elm$core$String$any, $elm$core$Char$isDigit, x)) && xs;
+		}),
+	true);
+var $elm$core$String$toFloat = _String_toFloat;
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -5657,17 +5670,21 @@ var $author$project$HomePage$update = F2(
 						model,
 						{temp: s});
 				case 'Submit':
-					var m = _Utils_update(
-						model,
+					var items = A2($elm$core$String$split, '\n', model.temp);
+					var m1 = A2(
+						$author$project$HomePage$update,
+						$author$project$HomePage$ShowWarning(items),
+						model);
+					var m2 = _Utils_update(
+						m1,
 						{
 							content: A2(
 								$elm$core$Array$append,
-								model.content,
-								$elm$core$Array$fromList(
-									A2($elm$core$String$split, '\n', model.temp)))
+								m1.content,
+								$elm$core$Array$fromList(items))
 						});
 					var $temp$action = $author$project$HomePage$Clear,
-						$temp$model = m;
+						$temp$model = m2;
 					action = $temp$action;
 					model = $temp$model;
 					continue update;
@@ -5682,7 +5699,7 @@ var $author$project$HomePage$update = F2(
 						{
 							content: A2($author$project$HomePage$deleteAt, i, model.content)
 						});
-				default:
+				case 'Scale':
 					var v = action.a;
 					return _Utils_update(
 						model,
@@ -5690,8 +5707,15 @@ var $author$project$HomePage$update = F2(
 							scale: A2(
 								$elm$core$Maybe$withDefault,
 								1,
-								$elm$core$String$toInt(v))
+								$elm$core$String$toFloat(v))
 						});
+				default:
+					var items = action.a;
+					return $author$project$HomePage$illegalInput(items) ? _Utils_update(
+						model,
+						{modalOn: true}) : _Utils_update(
+						model,
+						{modalOn: false});
 			}
 		}
 	});
@@ -5722,6 +5746,7 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$Attributes$for = $elm$html$Html$Attributes$stringProperty('htmlFor');
+var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
 var $elm$core$Elm$JsArray$indexedMap = _JsArray_indexedMap;
 var $elm$core$Array$indexedMap = F2(
@@ -5828,6 +5853,12 @@ var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('
 var $author$project$HomePage$Delete = function (a) {
 	return {$: 'Delete', a: a};
 };
+var $elm$html$Html$Events$onDoubleClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'dblclick',
+		$elm$json$Json$Decode$succeed(msg));
+};
 var $author$project$HomePage$viewButton = F2(
 	function (i, val) {
 		return A2(
@@ -5839,7 +5870,7 @@ var $author$project$HomePage$viewButton = F2(
 					$elm$html$Html$button,
 					_List_fromArray(
 						[
-							$elm$html$Html$Events$onClick(
+							$elm$html$Html$Events$onDoubleClick(
 							$author$project$HomePage$Delete(i))
 						]),
 					_List_fromArray(
@@ -5942,13 +5973,45 @@ var $author$project$HomePage$view = function (model) {
 												$elm$html$Html$text('Add ingredient list to recipe')
 											]))
 									])),
-								A2(
-								$elm$html$Html$div,
-								_List_fromArray(
-									[
-										A2($elm$html$Html$Attributes$attribute, 'style', 'width:500px;height:100px;')
-									]),
-								_List_Nil),
+								function () {
+								var _v0 = model.modalOn;
+								if (_v0) {
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$attribute, 'style', 'width:500px;height:100px;')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												$elm$html$Html$div,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$attribute, 'style', 'width:500px;height:10px;')
+													]),
+												_List_Nil),
+												A2(
+												$elm$html$Html$span,
+												_List_fromArray(
+													[
+														A2($elm$html$Html$Attributes$attribute, 'style', 'color: red;')
+													]),
+												_List_fromArray(
+													[
+														$elm$html$Html$text('WARNING: Last recipe batch contains unquantified item(s).')
+													]))
+											]));
+								} else {
+									return A2(
+										$elm$html$Html$div,
+										_List_fromArray(
+											[
+												A2($elm$html$Html$Attributes$attribute, 'style', 'width:500px;height:100px;')
+											]),
+										_List_Nil);
+								}
+							}(),
 								A2(
 								$elm$html$Html$div,
 								_List_fromArray(
@@ -5974,10 +6037,10 @@ var $author$project$HomePage$view = function (model) {
 												$elm$html$Html$Attributes$type_('range'),
 												$elm$html$Html$Attributes$max('10'),
 												$elm$html$Html$Attributes$min('0'),
-												$elm$html$Html$Attributes$step('1'),
+												$elm$html$Html$Attributes$step('0.1'),
 												A2($elm$html$Html$Attributes$attribute, 'style', 'width:80%; margin:0px auto; display:block;'),
 												$elm$html$Html$Attributes$value(
-												$elm$core$String$fromInt(model.scale)),
+												$elm$core$String$fromFloat(model.scale)),
 												$elm$html$Html$Events$onInput($author$project$HomePage$Scale)
 											]),
 										_List_Nil),
@@ -5990,7 +6053,7 @@ var $author$project$HomePage$view = function (model) {
 										_List_fromArray(
 											[
 												$elm$html$Html$text(
-												$elm$core$String$fromInt(model.scale))
+												$elm$core$String$fromFloat(model.scale))
 											]))
 									]))
 							])),
@@ -6007,7 +6070,7 @@ var $author$project$HomePage$view = function (model) {
 								$elm$html$Html$div,
 								_List_fromArray(
 									[
-										A2($elm$html$Html$Attributes$attribute, 'style', 'width:65%;height:80%;background-color: white; opacity: 0.8; padding: 2em; overflow:auto;')
+										A2($elm$html$Html$Attributes$attribute, 'style', 'width:65%; height:80%; background-color: white; opacity: 0.8; padding: 2em; overflow:auto;')
 									]),
 								_List_fromArray(
 									[
