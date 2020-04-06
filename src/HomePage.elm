@@ -6,6 +6,7 @@ import Html.Attributes exposing (style, class, name, placeholder, for, attribute
 import Html.Events exposing (..)
 import Array exposing (..)
 import String
+import Parsing exposing (Ingredient, asIngredient)
 
 
 -- MAIN
@@ -20,7 +21,7 @@ main =
 
 
 type alias Model = 
-  { content: Array String
+  { content: Array Ingredient
   , temp: String
   , scale: Float
   , modalOn: Bool }
@@ -44,7 +45,7 @@ type Msg
   | Clear
   | Delete Int
   | Scale String
-  | ShowWarning (List String)
+  | ShowWarning (List Ingredient)
 
 update : Msg -> Model -> Model
 update action model =
@@ -53,7 +54,7 @@ update action model =
         { model | temp = s }
     Submit ->
         let
-            items = String.split "\n" model.temp
+            items = ingredientize (String.split "\n" model.temp)
             m1 = update (ShowWarning items) model
             m2 = { m1 | content = Array.append m1.content (fromList items) }
         in
@@ -63,7 +64,12 @@ update action model =
     Delete i ->
         { model | content = deleteAt i model.content }
     Scale v ->
-        { model | scale = (String.toFloat v |> Maybe.withDefault 1) }
+        let
+            origScale = model.scale
+            newScale = String.toFloat v |> Maybe.withDefault 1
+        in
+            { model | scale = newScale
+                    , content = scaleContent (newScale/origScale) model.content }
     ShowWarning items ->
         if illegalInput items
         then { model | modalOn = True }
@@ -77,9 +83,30 @@ deleteAt i l =
   in
     Array.append front back
 
-illegalInput : List String -> Bool
-illegalInput = List.foldr (\x xs -> not (String.any Char.isDigit x) && xs) True
+scaleContent : Float -> Array Ingredient -> Array Ingredient
+scaleContent scale = Array.map (\{q, unit, rest} ->
+    case q of
+      Nothing -> {q=q, unit=unit, rest=rest}
+      Just a -> {q=Just (oneDecimal (a*scale)), unit=unit, rest=rest})
 
+oneDecimal : Float -> Float
+oneDecimal x = (Basics.toFloat (Basics.round (x*10)))/10
+
+illegalInput : List Ingredient -> Bool
+illegalInput = List.foldr (\x xs -> 
+    x.q == Nothing && xs) True
+
+ingredientize : List String -> List Ingredient
+ingredientize = List.map asIngredient
+
+stringize : Array Ingredient -> Array String
+stringize = Array.map (\ {q,unit,rest} ->
+    case (q,unit) of
+      (Nothing, Nothing) -> rest
+      (Nothing, Just u) -> u ++ " " ++ rest
+      (Just a, Nothing) -> (String.fromFloat a) ++ " " ++ rest
+      (Just a, Just u) -> (String.fromFloat a) ++ " " ++ u ++ " " ++ rest
+    )
 
 -- VIEW
 
@@ -126,7 +153,7 @@ view model =
                 ]
             , div [ class "contact100-more flex-col-c-m", attribute "style" "background-image: url('images/bg-02.jpg');" ]
                 [ div [ attribute "style" "width:65%; height:80%; background-color: white; opacity: 0.8; padding: 2em; overflow:auto;" ]
-                    [ div [] (Array.indexedMap viewButton model.content |> toList)
+                    [ div [] (Array.indexedMap viewButton (stringize model.content) |> toList)
                     ]
                 ]
             ]
