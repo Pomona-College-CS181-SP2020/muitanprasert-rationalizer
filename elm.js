@@ -5875,9 +5875,9 @@ var $author$project$HomePage$illegalInput = A2(
 	$elm$core$List$foldr,
 	F2(
 		function (x, xs) {
-			return _Utils_eq(x.q, $elm$core$Maybe$Nothing) && xs;
+			return _Utils_eq(x.q, $elm$core$Maybe$Nothing) || ($elm$core$String$isEmpty(x.rest) || xs);
 		}),
-	true);
+	false);
 var $author$project$Parsing$Ingredient = F3(
 	function (q, unit, rest) {
 		return {q: q, rest: rest, unit: unit};
@@ -5940,6 +5940,22 @@ var $elm$parser$Parser$Advanced$keeper = F2(
 		return A3($elm$parser$Parser$Advanced$map2, $elm$core$Basics$apL, parseFunc, parseArg);
 	});
 var $elm$parser$Parser$keeper = $elm$parser$Parser$Advanced$keeper;
+var $elm$parser$Parser$Advanced$backtrackable = function (_v0) {
+	var parse = _v0.a;
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s0) {
+			var _v1 = parse(s0);
+			if (_v1.$ === 'Bad') {
+				var x = _v1.b;
+				return A2($elm$parser$Parser$Advanced$Bad, false, x);
+			} else {
+				var a = _v1.b;
+				var s1 = _v1.c;
+				return A3($elm$parser$Parser$Advanced$Good, false, a, s1);
+			}
+		});
+};
+var $elm$parser$Parser$backtrackable = $elm$parser$Parser$Advanced$backtrackable;
 var $elm$parser$Parser$ExpectingFloat = {$: 'ExpectingFloat'};
 var $elm$parser$Parser$Advanced$consumeBase = _Parser_consumeBase;
 var $elm$parser$Parser$Advanced$consumeBase16 = _Parser_consumeBase16;
@@ -6121,6 +6137,109 @@ var $elm$parser$Parser$Advanced$float = F2(
 			});
 	});
 var $elm$parser$Parser$float = A2($elm$parser$Parser$Advanced$float, $elm$parser$Parser$ExpectingFloat, $elm$parser$Parser$ExpectingFloat);
+var $author$project$Parsing$Frac = F2(
+	function (num, deno) {
+		return {deno: deno, num: num};
+	});
+var $elm$parser$Parser$ExpectingInt = {$: 'ExpectingInt'};
+var $elm$parser$Parser$Advanced$int = F2(
+	function (expecting, invalid) {
+		return $elm$parser$Parser$Advanced$number(
+			{
+				binary: $elm$core$Result$Err(invalid),
+				expecting: expecting,
+				_float: $elm$core$Result$Err(invalid),
+				hex: $elm$core$Result$Err(invalid),
+				_int: $elm$core$Result$Ok($elm$core$Basics$identity),
+				invalid: invalid,
+				octal: $elm$core$Result$Err(invalid)
+			});
+	});
+var $elm$parser$Parser$int = A2($elm$parser$Parser$Advanced$int, $elm$parser$Parser$ExpectingInt, $elm$parser$Parser$ExpectingInt);
+var $elm$parser$Parser$Advanced$map = F2(
+	function (func, _v0) {
+		var parse = _v0.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Good') {
+					var p = _v1.a;
+					var a = _v1.b;
+					var s1 = _v1.c;
+					return A3(
+						$elm$parser$Parser$Advanced$Good,
+						p,
+						func(a),
+						s1);
+				} else {
+					var p = _v1.a;
+					var x = _v1.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				}
+			});
+	});
+var $elm$parser$Parser$map = $elm$parser$Parser$Advanced$map;
+var $elm$parser$Parser$Advanced$succeed = function (a) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A3($elm$parser$Parser$Advanced$Good, false, a, s);
+		});
+};
+var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
+var $elm$parser$Parser$ExpectingSymbol = function (a) {
+	return {$: 'ExpectingSymbol', a: a};
+};
+var $elm$parser$Parser$Advanced$Token = F2(
+	function (a, b) {
+		return {$: 'Token', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
+var $elm$core$Basics$not = _Basics_not;
+var $elm$parser$Parser$Advanced$token = function (_v0) {
+	var str = _v0.a;
+	var expecting = _v0.b;
+	var progress = !$elm$core$String$isEmpty(str);
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			var _v1 = A5($elm$parser$Parser$Advanced$isSubString, str, s.offset, s.row, s.col, s.src);
+			var newOffset = _v1.a;
+			var newRow = _v1.b;
+			var newCol = _v1.c;
+			return _Utils_eq(newOffset, -1) ? A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A2($elm$parser$Parser$Advanced$fromState, s, expecting)) : A3(
+				$elm$parser$Parser$Advanced$Good,
+				progress,
+				_Utils_Tuple0,
+				{col: newCol, context: s.context, indent: s.indent, offset: newOffset, row: newRow, src: s.src});
+		});
+};
+var $elm$parser$Parser$Advanced$symbol = $elm$parser$Parser$Advanced$token;
+var $elm$parser$Parser$symbol = function (str) {
+	return $elm$parser$Parser$Advanced$symbol(
+		A2(
+			$elm$parser$Parser$Advanced$Token,
+			str,
+			$elm$parser$Parser$ExpectingSymbol(str)));
+};
+var $author$project$Parsing$fraction = A2(
+	$elm$parser$Parser$map,
+	function (_v0) {
+		var num = _v0.num;
+		var deno = _v0.deno;
+		return num / deno;
+	},
+	A2(
+		$elm$parser$Parser$keeper,
+		A2(
+			$elm$parser$Parser$keeper,
+			$elm$parser$Parser$succeed($author$project$Parsing$Frac),
+			A2(
+				$elm$parser$Parser$ignorer,
+				$elm$parser$Parser$int,
+				$elm$parser$Parser$symbol('/'))),
+		$elm$parser$Parser$int));
 var $elm$parser$Parser$Advanced$Append = F2(
 	function (a, b) {
 		return {$: 'Append', a: a, b: b};
@@ -6222,23 +6341,36 @@ var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 			_Utils_chr('\r')));
 	});
 var $elm$parser$Parser$spaces = $elm$parser$Parser$Advanced$spaces;
-var $elm$parser$Parser$Advanced$succeed = function (a) {
-	return $elm$parser$Parser$Advanced$Parser(
-		function (s) {
-			return A3($elm$parser$Parser$Advanced$Good, false, a, s);
-		});
-};
-var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
 var $author$project$Parsing$parseQuantity = $elm$parser$Parser$oneOf(
 	_List_fromArray(
 		[
+			$elm$parser$Parser$backtrackable(
+			A2(
+				$elm$parser$Parser$keeper,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed($elm$core$Maybe$Just),
+					$elm$parser$Parser$spaces),
+				A2(
+					$elm$parser$Parser$ignorer,
+					A2(
+						$elm$parser$Parser$ignorer,
+						$elm$parser$Parser$float,
+						$elm$parser$Parser$symbol(' ')),
+					$elm$parser$Parser$spaces))),
 			A2(
 			$elm$parser$Parser$keeper,
 			A2(
 				$elm$parser$Parser$ignorer,
 				$elm$parser$Parser$succeed($elm$core$Maybe$Just),
 				$elm$parser$Parser$spaces),
-			A2($elm$parser$Parser$ignorer, $elm$parser$Parser$float, $elm$parser$Parser$spaces)),
+			A2(
+				$elm$parser$Parser$ignorer,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$author$project$Parsing$fraction,
+					$elm$parser$Parser$symbol(' ')),
+				$elm$parser$Parser$spaces)),
 			$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
 		]));
 var $elm$parser$Parser$chompWhile = $elm$parser$Parser$Advanced$chompWhile;
@@ -6299,12 +6431,6 @@ var $elm$core$List$concatMap = F2(
 var $elm$parser$Parser$ExpectingKeyword = function (a) {
 	return {$: 'ExpectingKeyword', a: a};
 };
-var $elm$parser$Parser$Advanced$Token = F2(
-	function (a, b) {
-		return {$: 'Token', a: a, b: b};
-	});
-var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
-var $elm$core$Basics$not = _Basics_not;
 var $elm$parser$Parser$Advanced$keyword = function (_v0) {
 	var kwd = _v0.a;
 	var expecting = _v0.b;
@@ -6718,7 +6844,23 @@ var $author$project$Parsing$asIngredient = function (str) {
 		return x;
 	}
 };
-var $author$project$HomePage$ingredientize = $elm$core$List$map($author$project$Parsing$asIngredient);
+var $author$project$HomePage$ingredientize = $elm$core$List$map(
+	function (str) {
+		var _v0 = $author$project$Parsing$asIngredient(str);
+		var q = _v0.q;
+		var unit = _v0.unit;
+		var rest = _v0.rest;
+		if (q.$ === 'Nothing') {
+			return {q: $elm$core$Maybe$Nothing, rest: rest, unit: unit};
+		} else {
+			var x = q.a;
+			return {
+				q: $elm$core$Maybe$Just(x * 1000),
+				rest: rest,
+				unit: unit
+			};
+		}
+	});
 var $elm$core$Elm$JsArray$map = _JsArray_map;
 var $elm$core$Array$map = F2(
 	function (func, _v0) {
@@ -6745,8 +6887,8 @@ var $elm$core$Array$map = F2(
 			A2($elm$core$Elm$JsArray$map, func, tail));
 	});
 var $elm$core$Basics$round = _Basics_round;
-var $author$project$HomePage$oneDecimal = function (x) {
-	return $elm$core$Basics$round(x * 10) / 10;
+var $author$project$HomePage$twoDecimal = function (x) {
+	return $elm$core$Basics$round(x * 100) / 100;
 };
 var $author$project$HomePage$scaleContent = function (scale) {
 	return $elm$core$Array$map(
@@ -6760,7 +6902,7 @@ var $author$project$HomePage$scaleContent = function (scale) {
 				var a = q.a;
 				return {
 					q: $elm$core$Maybe$Just(
-						$author$project$HomePage$oneDecimal(a * scale)),
+						$author$project$HomePage$twoDecimal(a * scale)),
 					rest: rest,
 					unit: unit
 				};
@@ -6957,34 +7099,336 @@ var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$html$Html$Attributes$step = function (n) {
 	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
 };
-var $author$project$HomePage$stringize = $elm$core$Array$map(
-	function (_v0) {
-		var q = _v0.q;
-		var unit = _v0.unit;
-		var rest = _v0.rest;
-		var _v1 = _Utils_Tuple2(q, unit);
-		if (_v1.a.$ === 'Nothing') {
-			if (_v1.b.$ === 'Nothing') {
-				var _v2 = _v1.a;
-				var _v3 = _v1.b;
-				return rest;
-			} else {
-				var _v4 = _v1.a;
-				var u = _v1.b.a;
-				return u + (' ' + rest);
-			}
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $myrho$elm_round$Round$addSign = F2(
+	function (signed, str) {
+		var isNotZero = A2(
+			$elm$core$List$any,
+			function (c) {
+				return (!_Utils_eq(
+					c,
+					_Utils_chr('0'))) && (!_Utils_eq(
+					c,
+					_Utils_chr('.')));
+			},
+			$elm$core$String$toList(str));
+		return _Utils_ap(
+			(signed && isNotZero) ? '-' : '',
+			str);
+	});
+var $elm$core$Char$fromCode = _Char_fromCode;
+var $myrho$elm_round$Round$increaseNum = function (_v0) {
+	var head = _v0.a;
+	var tail = _v0.b;
+	if (_Utils_eq(
+		head,
+		_Utils_chr('9'))) {
+		var _v1 = $elm$core$String$uncons(tail);
+		if (_v1.$ === 'Nothing') {
+			return '01';
 		} else {
-			if (_v1.b.$ === 'Nothing') {
-				var a = _v1.a.a;
-				var _v5 = _v1.b;
-				return $elm$core$String$fromFloat(a) + (' ' + rest);
-			} else {
-				var a = _v1.a.a;
-				var u = _v1.b.a;
-				return $elm$core$String$fromFloat(a) + (' ' + (u + (' ' + rest)));
-			}
+			var headtail = _v1.a;
+			return A2(
+				$elm$core$String$cons,
+				_Utils_chr('0'),
+				$myrho$elm_round$Round$increaseNum(headtail));
+		}
+	} else {
+		var c = $elm$core$Char$toCode(head);
+		return ((c >= 48) && (c < 57)) ? A2(
+			$elm$core$String$cons,
+			$elm$core$Char$fromCode(c + 1),
+			tail) : '0';
+	}
+};
+var $elm$core$Basics$isInfinite = _Basics_isInfinite;
+var $elm$core$Basics$isNaN = _Basics_isNaN;
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var $elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			$elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var $elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3($elm$core$String$repeatHelp, n, chunk, '');
+	});
+var $elm$core$String$padRight = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			string,
+			A2(
+				$elm$core$String$repeat,
+				n - $elm$core$String$length(string),
+				$elm$core$String$fromChar(_char)));
+	});
+var $elm$core$String$reverse = _String_reverse;
+var $myrho$elm_round$Round$splitComma = function (str) {
+	var _v0 = A2($elm$core$String$split, '.', str);
+	if (_v0.b) {
+		if (_v0.b.b) {
+			var before = _v0.a;
+			var _v1 = _v0.b;
+			var after = _v1.a;
+			return _Utils_Tuple2(before, after);
+		} else {
+			var before = _v0.a;
+			return _Utils_Tuple2(before, '0');
+		}
+	} else {
+		return _Utils_Tuple2('0', '0');
+	}
+};
+var $elm$core$Tuple$mapFirst = F2(
+	function (func, _v0) {
+		var x = _v0.a;
+		var y = _v0.b;
+		return _Utils_Tuple2(
+			func(x),
+			y);
+	});
+var $myrho$elm_round$Round$toDecimal = function (fl) {
+	var _v0 = A2(
+		$elm$core$String$split,
+		'e',
+		$elm$core$String$fromFloat(
+			$elm$core$Basics$abs(fl)));
+	if (_v0.b) {
+		if (_v0.b.b) {
+			var num = _v0.a;
+			var _v1 = _v0.b;
+			var exp = _v1.a;
+			var e = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$String$toInt(
+					A2($elm$core$String$startsWith, '+', exp) ? A2($elm$core$String$dropLeft, 1, exp) : exp));
+			var _v2 = $myrho$elm_round$Round$splitComma(num);
+			var before = _v2.a;
+			var after = _v2.b;
+			var total = _Utils_ap(before, after);
+			var zeroed = (e < 0) ? A2(
+				$elm$core$Maybe$withDefault,
+				'0',
+				A2(
+					$elm$core$Maybe$map,
+					function (_v3) {
+						var a = _v3.a;
+						var b = _v3.b;
+						return a + ('.' + b);
+					},
+					A2(
+						$elm$core$Maybe$map,
+						$elm$core$Tuple$mapFirst($elm$core$String$fromChar),
+						$elm$core$String$uncons(
+							_Utils_ap(
+								A2(
+									$elm$core$String$repeat,
+									$elm$core$Basics$abs(e),
+									'0'),
+								total))))) : A3(
+				$elm$core$String$padRight,
+				e + 1,
+				_Utils_chr('0'),
+				total);
+			return _Utils_ap(
+				(fl < 0) ? '-' : '',
+				zeroed);
+		} else {
+			var num = _v0.a;
+			return _Utils_ap(
+				(fl < 0) ? '-' : '',
+				num);
+		}
+	} else {
+		return '';
+	}
+};
+var $myrho$elm_round$Round$roundFun = F3(
+	function (functor, s, fl) {
+		if ($elm$core$Basics$isInfinite(fl) || $elm$core$Basics$isNaN(fl)) {
+			return $elm$core$String$fromFloat(fl);
+		} else {
+			var signed = fl < 0;
+			var _v0 = $myrho$elm_round$Round$splitComma(
+				$myrho$elm_round$Round$toDecimal(
+					$elm$core$Basics$abs(fl)));
+			var before = _v0.a;
+			var after = _v0.b;
+			var r = $elm$core$String$length(before) + s;
+			var normalized = _Utils_ap(
+				A2($elm$core$String$repeat, (-r) + 1, '0'),
+				A3(
+					$elm$core$String$padRight,
+					r,
+					_Utils_chr('0'),
+					_Utils_ap(before, after)));
+			var totalLen = $elm$core$String$length(normalized);
+			var roundDigitIndex = A2($elm$core$Basics$max, 1, r);
+			var increase = A2(
+				functor,
+				signed,
+				A3($elm$core$String$slice, roundDigitIndex, totalLen, normalized));
+			var remains = A3($elm$core$String$slice, 0, roundDigitIndex, normalized);
+			var num = increase ? $elm$core$String$reverse(
+				A2(
+					$elm$core$Maybe$withDefault,
+					'1',
+					A2(
+						$elm$core$Maybe$map,
+						$myrho$elm_round$Round$increaseNum,
+						$elm$core$String$uncons(
+							$elm$core$String$reverse(remains))))) : remains;
+			var numLen = $elm$core$String$length(num);
+			var numZeroed = (num === '0') ? num : ((s <= 0) ? _Utils_ap(
+				num,
+				A2(
+					$elm$core$String$repeat,
+					$elm$core$Basics$abs(s),
+					'0')) : ((_Utils_cmp(
+				s,
+				$elm$core$String$length(after)) < 0) ? (A3($elm$core$String$slice, 0, numLen - s, num) + ('.' + A3($elm$core$String$slice, numLen - s, numLen, num))) : _Utils_ap(
+				before + '.',
+				A3(
+					$elm$core$String$padRight,
+					s,
+					_Utils_chr('0'),
+					after))));
+			return A2($myrho$elm_round$Round$addSign, signed, numZeroed);
+		}
+	});
+var $myrho$elm_round$Round$ceiling = $myrho$elm_round$Round$roundFun(
+	F2(
+		function (signed, str) {
+			var _v0 = $elm$core$String$uncons(str);
+			if (_v0.$ === 'Nothing') {
+				return false;
+			} else {
+				if ('0' === _v0.a.a.valueOf()) {
+					var _v1 = _v0.a;
+					var rest = _v1.b;
+					return (!signed) && A2(
+						$elm$core$List$any,
+						$elm$core$Basics$neq(
+							_Utils_chr('0')),
+						$elm$core$String$toList(rest));
+				} else {
+					return !signed;
+				}
+			}
+		}));
+var $elm$core$Array$filter = F2(
+	function (isGood, array) {
+		return $elm$core$Array$fromList(
+			A3(
+				$elm$core$Array$foldr,
+				F2(
+					function (x, xs) {
+						return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+					}),
+				_List_Nil,
+				array));
+	});
+var $joshforisha$elm_inflect$Inflect$singulars = $elm$core$List$reverse(
+	_Utils_ap(
+		_List_fromArray(
+			[
+				A2($joshforisha$elm_inflect$Inflect$replace0, 's$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(ss)$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(n)ews$', 'ews'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([ti])a$', 'um'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)(sis|ses)$', 'sis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(^analy)(sis|ses)$', 'sis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([^f])ves$', 'fe'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(hive)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(tive)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([lr])ves$', 'f'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([^aeiouy]|qu)ies$', 'y'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(s)eries$', 'eries'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(m)ovies$', 'ovie'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(x|ch|ss|sh)es$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(m|l)ice$', 'ouse'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(bus)(es)?$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(o)es$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(shoe)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(cris|test)(is|es)$', 'is'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(a)x[ie]s$', 'xis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(octop|vir)(us|i)$', 'us'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(alias|status)(es)?$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(ox)en', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(vert|ind)ices$', 'ex'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(matr)ices$', 'ix'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(quiz)zes$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(database)s$', '')
+			]),
+		$joshforisha$elm_inflect$Inflect$irregulars(false)));
+var $joshforisha$elm_inflect$Inflect$singularize = function (string) {
+	return A2(
+		$elm$core$List$member,
+		$elm$core$String$toLower(string),
+		$joshforisha$elm_inflect$Inflect$uncountables) ? string : A2($joshforisha$elm_inflect$Inflect$apply, $joshforisha$elm_inflect$Inflect$singulars, string);
+};
+var $author$project$HomePage$stringize = function (l) {
+	return A2(
+		$elm$core$Array$filter,
+		function (s) {
+			return !$elm$core$String$isEmpty(s);
+		},
+		A2(
+			$elm$core$Array$map,
+			function (_v0) {
+				var q = _v0.q;
+				var unit = _v0.unit;
+				var rest = _v0.rest;
+				var _v1 = _Utils_Tuple2(q, unit);
+				if (_v1.a.$ === 'Nothing') {
+					if (_v1.b.$ === 'Nothing') {
+						var _v2 = _v1.a;
+						var _v3 = _v1.b;
+						return rest;
+					} else {
+						var _v4 = _v1.a;
+						var u = _v1.b.a;
+						return u + (' ' + rest);
+					}
+				} else {
+					if (_v1.b.$ === 'Nothing') {
+						var a = _v1.a.a;
+						var _v5 = _v1.b;
+						var v = A2($myrho$elm_round$Round$ceiling, 0, a / 1000);
+						var real = $elm$core$String$fromFloat(
+							$author$project$HomePage$twoDecimal(a / 1000));
+						return (v === '1') ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + (' (exact quantity = ' + (real + ')'))))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + (' (exact quantity = ' + (real + ')')))));
+					} else {
+						var a = _v1.a.a;
+						var u = _v1.b.a;
+						return $elm$core$String$fromFloat(
+							$author$project$HomePage$twoDecimal(a / 1000)) + (' ' + (u + (' ' + rest)));
+					}
+				}
+			},
+			l));
+};
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$textarea = _VirtualDom_node('textarea');
@@ -7139,7 +7583,7 @@ var $author$project$HomePage$view = function (model) {
 													]),
 												_List_fromArray(
 													[
-														$elm$html$Html$text('WARNING: Last recipe batch contains unquantified item(s).')
+														$elm$html$Html$text('WARNING: Last recipe batch contains underspecified item(s).')
 													]))
 											]));
 								} else {
@@ -7176,8 +7620,8 @@ var $author$project$HomePage$view = function (model) {
 											[
 												$elm$html$Html$Attributes$type_('range'),
 												$elm$html$Html$Attributes$max('10'),
-												$elm$html$Html$Attributes$min('0'),
-												$elm$html$Html$Attributes$step('0.1'),
+												$elm$html$Html$Attributes$min('0.05'),
+												$elm$html$Html$Attributes$step('0.05'),
 												A2($elm$html$Html$Attributes$attribute, 'style', 'width:80%; margin:0px auto; display:block;'),
 												$elm$html$Html$Attributes$value(
 												$elm$core$String$fromFloat(model.scale)),

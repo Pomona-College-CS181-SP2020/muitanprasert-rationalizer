@@ -7,7 +7,8 @@ import Html.Events exposing (..)
 import Array exposing (..)
 import String
 import Parsing exposing (Ingredient, asIngredient)
-
+import Round
+import Inflect exposing (pluralize, singularize)
 
 -- MAIN
 
@@ -87,26 +88,43 @@ scaleContent : Float -> Array Ingredient -> Array Ingredient
 scaleContent scale = Array.map (\{q, unit, rest} ->
     case q of
       Nothing -> {q=q, unit=unit, rest=rest}
-      Just a -> {q=Just (oneDecimal (a*scale)), unit=unit, rest=rest})
+      Just a -> {q=Just (twoDecimal (a*scale)), unit=unit, rest=rest})
 
-oneDecimal : Float -> Float
-oneDecimal x = (Basics.toFloat (Basics.round (x*10)))/10
+twoDecimal : Float -> Float
+twoDecimal x = (Basics.toFloat (Basics.round (x*100)))/100
 
 illegalInput : List Ingredient -> Bool
 illegalInput = List.foldr (\x xs -> 
-    x.q == Nothing && xs) True
+    x.q == Nothing
+    || String.isEmpty x.rest
+    || xs) False
 
 ingredientize : List String -> List Ingredient
-ingredientize = List.map asIngredient
+ingredientize = List.map (\str ->
+    let
+        {q, unit, rest} =  asIngredient str
+    in
+        case q of
+            Nothing -> {q=Nothing, unit=unit, rest=rest}
+            Just x -> {q=Just (x*1000), unit=unit, rest=rest} --keep quantity x1000 for precision
+    )
 
 stringize : Array Ingredient -> Array String
-stringize = Array.map (\ {q,unit,rest} ->
-    case (q,unit) of
-      (Nothing, Nothing) -> rest
-      (Nothing, Just u) -> u ++ " " ++ rest
-      (Just a, Nothing) -> (String.fromFloat a) ++ " " ++ rest
-      (Just a, Just u) -> (String.fromFloat a) ++ " " ++ u ++ " " ++ rest
-    )
+stringize l = Array.filter (\s -> not (String.isEmpty s))
+    ( Array.map (\ {q,unit,rest} ->
+        case (q,unit) of
+        (Nothing, Nothing) -> rest
+        (Nothing, Just u) -> u ++ " " ++ rest
+        (Just a, Nothing) -> 
+            let
+                v = Round.ceiling 0 (a/1000)
+                real = String.fromFloat (twoDecimal (a/1000))
+            in
+                if v == "1"
+                then v ++ " " ++ (singularize rest) ++ " (use " ++ real ++ ")"
+                else v ++ " " ++ (pluralize rest) ++ " (use " ++ real ++ ")"
+        (Just a, Just u) -> (String.fromFloat (twoDecimal (a/1000))) ++ " " ++ u ++ " " ++ rest ) l )
+
 
 -- VIEW
 
@@ -137,14 +155,14 @@ view model =
                         div [ attribute "style" "width:500px;height:100px;" ]
                             [ div [ attribute "style" "width:500px;height:10px;" ] []
                             , span [ attribute "style" "color: red;" ]
-                              [ text "WARNING: Last recipe batch contains unquantified item(s)." ]
+                              [ text "WARNING: Last recipe batch contains underspecified item(s)." ]
                             ]
                     False ->
                         div [ attribute "style" "width:500px;height:100px;" ] []
                 , div [ class "slidecontainer" ]
                     [ span [ attribute "style" "width: 100%; display: block;font-family: Montserrat-SemiBold;font-size: 20px;color: #333333;line-height: 1.2;text-align: center;margin-bottom: 1em;" ]
                         [ text "How many servings?" ]
-                    , input [ type_ "range", Html.Attributes.max "10", Html.Attributes.min "0", step "0.1", attribute "style" "width:80%; margin:0px auto; display:block;"
+                    , input [ type_ "range", Html.Attributes.max "10", Html.Attributes.min "0.05", step "0.05", attribute "style" "width:80%; margin:0px auto; display:block;"
                             , value (String.fromFloat model.scale)
                             , onInput Scale ] []
                     , label [ attribute "style" "text-align: center; margin-top: 0.5em;"]

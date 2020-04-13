@@ -42,12 +42,28 @@ units : List (Parser ())
 units = List.concatMap (\b -> [keyword (b++"."), keyword b, keyword (pascalize b)]) abbrevs
      ++ List.concatMap (\b -> [keyword (pluralize b), keyword b]) bases
 
+type alias Frac = { num : Int, deno : Int }
+
+fraction : Parser Float
+fraction =
+  Parser.map (\{num, deno} -> (toFloat num) / (toFloat deno))
+    <| succeed Frac
+        |= int
+        |. symbol "/" --no space allowed between slash
+        |= int
+
 parseQuantity : Parser (Maybe Float)
 parseQuantity =
     oneOf
-        [ succeed Just
+        [ backtrackable ( succeed Just
             |. spaces
             |= float
+            |. symbol " " --requires a space after quantity
+            |. spaces )
+        , succeed Just
+            |. spaces
+            |= fraction
+            |. symbol " " --requires a space after quantity
             |. spaces
         , succeed Nothing
         ]
@@ -77,5 +93,5 @@ parseLine =
 asIngredient : String -> Ingredient
 asIngredient str = 
     case (run parseLine str) of
-      Err _ -> {q=Nothing, unit=Nothing, rest=""} --no input should ever trigger this
+      Err _ -> {q=Nothing, unit=Nothing, rest=""} --no input should ever trigger this??
       Ok x -> x

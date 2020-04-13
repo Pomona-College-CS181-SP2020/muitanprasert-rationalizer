@@ -20,8 +20,8 @@ no_unit : Test
 no_unit =
     test "no unit" <| \_ ->
         let
-            input = "2 eggs"
-            output = {q=Just 2, unit=Nothing, rest="eggs"}
+            input = "2 .eggs"
+            output = {q=Just 2, unit=Nothing, rest=".eggs"}
         in
             Expect.equal (asIngredient input) output
 
@@ -29,8 +29,35 @@ floating : Test
 floating =
     test "floating" <| \_ ->
         let
-            input = "2.5 cups whole milk"
+            input = "2.5 cups  whole milk"
             output = {q=Just 2.5, unit=Just "cups", rest="whole milk"}
+        in
+            Expect.equal (asIngredient input) output
+
+frac : Test
+frac =
+    test "fraction" <| \_ ->
+        let
+            input = " 2/5 cups  whole milk"
+            output = {q=Just 0.4, unit=Just "cups", rest="whole milk"}
+        in
+            Expect.equal (asIngredient input) output
+
+bad_number_1 : Test 
+bad_number_1 =
+    test "more than 1 decimal point: remove" <| \_ ->
+        let
+            input = "2.5.24  cups water"
+            output = {q=Nothing, unit=Nothing, rest=""}
+        in
+            Expect.equal (asIngredient input) output
+
+bad_number_2 : Test 
+bad_number_2 =
+    test "more than 1 slash: remove" <| \_ ->
+        let
+            input = "2/5/24  cups water"
+            output = {q=Nothing, unit=Nothing, rest=""}
         in
             Expect.equal (asIngredient input) output
 
@@ -38,7 +65,7 @@ no_space : Test
 no_space =
     test "no space" <| \_ ->
         let
-            input = "20tablespoons vanilla extract  "
+            input = "20 tablespoons vanilla extract  "
             output = {q=Just 20, unit=Just "tablespoons", rest="vanilla extract  "}
         in
             Expect.equal (asIngredient input) output

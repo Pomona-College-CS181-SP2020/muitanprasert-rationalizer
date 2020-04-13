@@ -910,6 +910,136 @@ var _Basics_xor = F2(function(a, b) { return a !== b; });
 
 
 
+
+// STRINGS
+
+
+var _Parser_isSubString = F5(function(smallString, offset, row, col, bigString)
+{
+	var smallLength = smallString.length;
+	var isGood = offset + smallLength <= bigString.length;
+
+	for (var i = 0; isGood && i < smallLength; )
+	{
+		var code = bigString.charCodeAt(offset);
+		isGood =
+			smallString[i++] === bigString[offset++]
+			&& (
+				code === 0x000A /* \n */
+					? ( row++, col=1 )
+					: ( col++, (code & 0xF800) === 0xD800 ? smallString[i++] === bigString[offset++] : 1 )
+			)
+	}
+
+	return _Utils_Tuple3(isGood ? offset : -1, row, col);
+});
+
+
+
+// CHARS
+
+
+var _Parser_isSubChar = F3(function(predicate, offset, string)
+{
+	return (
+		string.length <= offset
+			? -1
+			:
+		(string.charCodeAt(offset) & 0xF800) === 0xD800
+			? (predicate(_Utils_chr(string.substr(offset, 2))) ? offset + 2 : -1)
+			:
+		(predicate(_Utils_chr(string[offset]))
+			? ((string[offset] === '\n') ? -2 : (offset + 1))
+			: -1
+		)
+	);
+});
+
+
+var _Parser_isAsciiCode = F3(function(code, offset, string)
+{
+	return string.charCodeAt(offset) === code;
+});
+
+
+
+// NUMBERS
+
+
+var _Parser_chompBase10 = F2(function(offset, string)
+{
+	for (; offset < string.length; offset++)
+	{
+		var code = string.charCodeAt(offset);
+		if (code < 0x30 || 0x39 < code)
+		{
+			return offset;
+		}
+	}
+	return offset;
+});
+
+
+var _Parser_consumeBase = F3(function(base, offset, string)
+{
+	for (var total = 0; offset < string.length; offset++)
+	{
+		var digit = string.charCodeAt(offset) - 0x30;
+		if (digit < 0 || base <= digit) break;
+		total = base * total + digit;
+	}
+	return _Utils_Tuple2(offset, total);
+});
+
+
+var _Parser_consumeBase16 = F2(function(offset, string)
+{
+	for (var total = 0; offset < string.length; offset++)
+	{
+		var code = string.charCodeAt(offset);
+		if (0x30 <= code && code <= 0x39)
+		{
+			total = 16 * total + code - 0x30;
+		}
+		else if (0x41 <= code && code <= 0x46)
+		{
+			total = 16 * total + code - 55;
+		}
+		else if (0x61 <= code && code <= 0x66)
+		{
+			total = 16 * total + code - 87;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return _Utils_Tuple2(offset, total);
+});
+
+
+
+// FIND STRING
+
+
+var _Parser_findSubString = F5(function(smallString, offset, row, col, bigString)
+{
+	var newOffset = bigString.indexOf(smallString, offset);
+	var target = newOffset < 0 ? bigString.length : newOffset + smallString.length;
+
+	while (offset < target)
+	{
+		var code = bigString.charCodeAt(offset++);
+		code === 0x000A /* \n */
+			? ( col=1, row++ )
+			: ( col++, (code & 0xF800) === 0xD800 && offset++ )
+	}
+
+	return _Utils_Tuple3(newOffset, row, col);
+});
+
+
+
 var _String_cons = F2(function(chr, str)
 {
 	return chr + str;
@@ -1219,136 +1349,6 @@ function _String_fromList(chars)
 	return _List_toArray(chars).join('');
 }
 
-
-
-
-
-// STRINGS
-
-
-var _Parser_isSubString = F5(function(smallString, offset, row, col, bigString)
-{
-	var smallLength = smallString.length;
-	var isGood = offset + smallLength <= bigString.length;
-
-	for (var i = 0; isGood && i < smallLength; )
-	{
-		var code = bigString.charCodeAt(offset);
-		isGood =
-			smallString[i++] === bigString[offset++]
-			&& (
-				code === 0x000A /* \n */
-					? ( row++, col=1 )
-					: ( col++, (code & 0xF800) === 0xD800 ? smallString[i++] === bigString[offset++] : 1 )
-			)
-	}
-
-	return _Utils_Tuple3(isGood ? offset : -1, row, col);
-});
-
-
-
-// CHARS
-
-
-var _Parser_isSubChar = F3(function(predicate, offset, string)
-{
-	return (
-		string.length <= offset
-			? -1
-			:
-		(string.charCodeAt(offset) & 0xF800) === 0xD800
-			? (predicate(_Utils_chr(string.substr(offset, 2))) ? offset + 2 : -1)
-			:
-		(predicate(_Utils_chr(string[offset]))
-			? ((string[offset] === '\n') ? -2 : (offset + 1))
-			: -1
-		)
-	);
-});
-
-
-var _Parser_isAsciiCode = F3(function(code, offset, string)
-{
-	return string.charCodeAt(offset) === code;
-});
-
-
-
-// NUMBERS
-
-
-var _Parser_chompBase10 = F2(function(offset, string)
-{
-	for (; offset < string.length; offset++)
-	{
-		var code = string.charCodeAt(offset);
-		if (code < 0x30 || 0x39 < code)
-		{
-			return offset;
-		}
-	}
-	return offset;
-});
-
-
-var _Parser_consumeBase = F3(function(base, offset, string)
-{
-	for (var total = 0; offset < string.length; offset++)
-	{
-		var digit = string.charCodeAt(offset) - 0x30;
-		if (digit < 0 || base <= digit) break;
-		total = base * total + digit;
-	}
-	return _Utils_Tuple2(offset, total);
-});
-
-
-var _Parser_consumeBase16 = F2(function(offset, string)
-{
-	for (var total = 0; offset < string.length; offset++)
-	{
-		var code = string.charCodeAt(offset);
-		if (0x30 <= code && code <= 0x39)
-		{
-			total = 16 * total + code - 0x30;
-		}
-		else if (0x41 <= code && code <= 0x46)
-		{
-			total = 16 * total + code - 55;
-		}
-		else if (0x61 <= code && code <= 0x66)
-		{
-			total = 16 * total + code - 87;
-		}
-		else
-		{
-			break;
-		}
-	}
-	return _Utils_Tuple2(offset, total);
-});
-
-
-
-// FIND STRING
-
-
-var _Parser_findSubString = F5(function(smallString, offset, row, col, bigString)
-{
-	var newOffset = bigString.indexOf(smallString, offset);
-	var target = newOffset < 0 ? bigString.length : newOffset + smallString.length;
-
-	while (offset < target)
-	{
-		var code = bigString.charCodeAt(offset++);
-		code === 0x000A /* \n */
-			? ( col=1, row++ )
-			: ( col++, (code & 0xF800) === 0xD800 && offset++ )
-	}
-
-	return _Utils_Tuple3(newOffset, row, col);
-});
 
 
 
@@ -2829,464 +2829,9 @@ var $elm$core$Basics$apR = F2(
 	function (x, f) {
 		return f(x);
 	});
-var $elm_explorations$test$Test$Internal$Batch = function (a) {
-	return {$: 'Batch', a: a};
-};
-var $elm_explorations$test$Test$Runner$Failure$DuplicatedName = {$: 'DuplicatedName'};
-var $elm_explorations$test$Test$Runner$Failure$EmptyList = {$: 'EmptyList'};
-var $elm_explorations$test$Test$Runner$Failure$Invalid = function (a) {
-	return {$: 'Invalid', a: a};
-};
-var $elm$core$Basics$append = _Utils_append;
-var $elm$core$Result$Err = function (a) {
-	return {$: 'Err', a: a};
-};
-var $elm$core$Result$Ok = function (a) {
-	return {$: 'Ok', a: a};
-};
-var $elm$core$Result$andThen = F2(
-	function (callback, result) {
-		if (result.$ === 'Ok') {
-			var value = result.a;
-			return callback(value);
-		} else {
-			var msg = result.a;
-			return $elm$core$Result$Err(msg);
-		}
-	});
 var $elm$core$Basics$apL = F2(
 	function (f, x) {
 		return f(x);
-	});
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
-var $elm$core$Basics$add = _Basics_add;
-var $elm$core$List$foldl = F3(
-	function (func, acc, list) {
-		foldl:
-		while (true) {
-			if (!list.b) {
-				return acc;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				var $temp$func = func,
-					$temp$acc = A2(func, x, acc),
-					$temp$list = xs;
-				func = $temp$func;
-				acc = $temp$acc;
-				list = $temp$list;
-				continue foldl;
-			}
-		}
-	});
-var $elm$core$Basics$gt = _Utils_gt;
-var $elm$core$List$reverse = function (list) {
-	return A3($elm$core$List$foldl, $elm$core$List$cons, _List_Nil, list);
-};
-var $elm$core$List$foldrHelper = F4(
-	function (fn, acc, ctr, ls) {
-		if (!ls.b) {
-			return acc;
-		} else {
-			var a = ls.a;
-			var r1 = ls.b;
-			if (!r1.b) {
-				return A2(fn, a, acc);
-			} else {
-				var b = r1.a;
-				var r2 = r1.b;
-				if (!r2.b) {
-					return A2(
-						fn,
-						a,
-						A2(fn, b, acc));
-				} else {
-					var c = r2.a;
-					var r3 = r2.b;
-					if (!r3.b) {
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(fn, c, acc)));
-					} else {
-						var d = r3.a;
-						var r4 = r3.b;
-						var res = (ctr > 500) ? A3(
-							$elm$core$List$foldl,
-							fn,
-							acc,
-							$elm$core$List$reverse(r4)) : A4($elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(
-									fn,
-									c,
-									A2(fn, d, res))));
-					}
-				}
-			}
-		}
-	});
-var $elm$core$List$foldr = F3(
-	function (fn, acc, ls) {
-		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
-	});
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
-var $elm$core$List$concat = function (lists) {
-	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
-};
-var $elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						$elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
-var $elm$core$List$concatMap = F2(
-	function (f, list) {
-		return $elm$core$List$concat(
-			A2($elm$core$List$map, f, list));
-	});
-var $elm$core$Basics$identity = function (x) {
-	return x;
-};
-var $elm$core$Set$Set_elm_builtin = function (a) {
-	return {$: 'Set_elm_builtin', a: a};
-};
-var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
-var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
-var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
-var $elm$core$Dict$Black = {$: 'Black'};
-var $elm$core$Dict$RBNode_elm_builtin = F5(
-	function (a, b, c, d, e) {
-		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
-	});
-var $elm$core$Dict$Red = {$: 'Red'};
-var $elm$core$Dict$balance = F5(
-	function (color, key, value, left, right) {
-		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
-			var _v1 = right.a;
-			var rK = right.b;
-			var rV = right.c;
-			var rLeft = right.d;
-			var rRight = right.e;
-			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
-				var _v3 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					$elm$core$Dict$Red,
-					key,
-					value,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, lK, lV, lLeft, lRight),
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					color,
-					rK,
-					rV,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, left, rLeft),
-					rRight);
-			}
-		} else {
-			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
-				var _v5 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var _v6 = left.d;
-				var _v7 = _v6.a;
-				var llK = _v6.b;
-				var llV = _v6.c;
-				var llLeft = _v6.d;
-				var llRight = _v6.e;
-				var lRight = left.e;
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					$elm$core$Dict$Red,
-					lK,
-					lV,
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight),
-					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, lRight, right));
-			} else {
-				return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
-			}
-		}
-	});
-var $elm$core$Basics$compare = _Utils_compare;
-var $elm$core$Dict$insertHelp = F3(
-	function (key, value, dict) {
-		if (dict.$ === 'RBEmpty_elm_builtin') {
-			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
-		} else {
-			var nColor = dict.a;
-			var nKey = dict.b;
-			var nValue = dict.c;
-			var nLeft = dict.d;
-			var nRight = dict.e;
-			var _v1 = A2($elm$core$Basics$compare, key, nKey);
-			switch (_v1.$) {
-				case 'LT':
-					return A5(
-						$elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						A3($elm$core$Dict$insertHelp, key, value, nLeft),
-						nRight);
-				case 'EQ':
-					return A5($elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
-				default:
-					return A5(
-						$elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						nLeft,
-						A3($elm$core$Dict$insertHelp, key, value, nRight));
-			}
-		}
-	});
-var $elm$core$Dict$insert = F3(
-	function (key, value, dict) {
-		var _v0 = A3($elm$core$Dict$insertHelp, key, value, dict);
-		if ((_v0.$ === 'RBNode_elm_builtin') && (_v0.a.$ === 'Red')) {
-			var _v1 = _v0.a;
-			var k = _v0.b;
-			var v = _v0.c;
-			var l = _v0.d;
-			var r = _v0.e;
-			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
-		} else {
-			var x = _v0;
-			return x;
-		}
-	});
-var $elm$core$Set$insert = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
-	});
-var $elm$core$Basics$False = {$: 'False'};
-var $elm$core$Basics$True = {$: 'True'};
-var $elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
-};
-var $elm$core$Dict$get = F2(
-	function (targetKey, dict) {
-		get:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var key = dict.b;
-				var value = dict.c;
-				var left = dict.d;
-				var right = dict.e;
-				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
-				switch (_v1.$) {
-					case 'LT':
-						var $temp$targetKey = targetKey,
-							$temp$dict = left;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-					case 'EQ':
-						return $elm$core$Maybe$Just(value);
-					default:
-						var $temp$targetKey = targetKey,
-							$temp$dict = right;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-				}
-			}
-		}
-	});
-var $elm$core$Dict$member = F2(
-	function (key, dict) {
-		var _v0 = A2($elm$core$Dict$get, key, dict);
-		if (_v0.$ === 'Just') {
-			return true;
-		} else {
-			return false;
-		}
-	});
-var $elm$core$Set$member = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return A2($elm$core$Dict$member, key, dict);
-	});
-var $elm_explorations$test$Test$Internal$duplicatedName = function () {
-	var names = function (test) {
-		names:
-		while (true) {
-			switch (test.$) {
-				case 'Labeled':
-					var str = test.a;
-					return _List_fromArray(
-						[str]);
-				case 'Batch':
-					var subtests = test.a;
-					return A2($elm$core$List$concatMap, names, subtests);
-				case 'UnitTest':
-					return _List_Nil;
-				case 'FuzzTest':
-					return _List_Nil;
-				case 'Skipped':
-					var subTest = test.a;
-					var $temp$test = subTest;
-					test = $temp$test;
-					continue names;
-				default:
-					var subTest = test.a;
-					var $temp$test = subTest;
-					test = $temp$test;
-					continue names;
-			}
-		}
-	};
-	var insertOrFail = function (newName) {
-		return $elm$core$Result$andThen(
-			function (oldNames) {
-				return A2($elm$core$Set$member, newName, oldNames) ? $elm$core$Result$Err(newName) : $elm$core$Result$Ok(
-					A2($elm$core$Set$insert, newName, oldNames));
-			});
-	};
-	return A2(
-		$elm$core$Basics$composeR,
-		$elm$core$List$concatMap(names),
-		A2(
-			$elm$core$List$foldl,
-			insertOrFail,
-			$elm$core$Result$Ok($elm$core$Set$empty)));
-}();
-var $elm_explorations$test$Test$Internal$UnitTest = function (a) {
-	return {$: 'UnitTest', a: a};
-};
-var $elm_explorations$test$Test$Expectation$Fail = function (a) {
-	return {$: 'Fail', a: a};
-};
-var $elm_explorations$test$Test$Expectation$fail = function (_v0) {
-	var description = _v0.description;
-	var reason = _v0.reason;
-	return $elm_explorations$test$Test$Expectation$Fail(
-		{description: description, given: $elm$core$Maybe$Nothing, reason: reason});
-};
-var $elm_explorations$test$Test$Internal$failNow = function (record) {
-	return $elm_explorations$test$Test$Internal$UnitTest(
-		function (_v0) {
-			return _List_fromArray(
-				[
-					$elm_explorations$test$Test$Expectation$fail(record)
-				]);
-		});
-};
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
-var $elm_explorations$test$Test$concat = function (tests) {
-	if ($elm$core$List$isEmpty(tests)) {
-		return $elm_explorations$test$Test$Internal$failNow(
-			{
-				description: 'This `concat` has no tests in it. Let\'s give it some!',
-				reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$EmptyList)
-			});
-	} else {
-		var _v0 = $elm_explorations$test$Test$Internal$duplicatedName(tests);
-		if (_v0.$ === 'Err') {
-			var duped = _v0.a;
-			return $elm_explorations$test$Test$Internal$failNow(
-				{
-					description: 'A test group contains multiple tests named \'' + (duped + '\'. Do some renaming so that tests have unique names.'),
-					reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
-				});
-		} else {
-			return $elm_explorations$test$Test$Internal$Batch(tests);
-		}
-	}
-};
-var $elm_explorations$test$Test$Runner$Failure$BadDescription = {$: 'BadDescription'};
-var $elm_explorations$test$Test$Internal$Labeled = F2(
-	function (a, b) {
-		return {$: 'Labeled', a: a, b: b};
-	});
-var $elm$core$Basics$eq = _Utils_equal;
-var $elm$core$String$isEmpty = function (string) {
-	return string === '';
-};
-var $elm$core$String$trim = _String_trim;
-var $elm_explorations$test$Test$describe = F2(
-	function (untrimmedDesc, tests) {
-		var desc = $elm$core$String$trim(untrimmedDesc);
-		if ($elm$core$String$isEmpty(desc)) {
-			return $elm_explorations$test$Test$Internal$failNow(
-				{
-					description: 'This `describe` has a blank description. Let\'s give it a useful one!',
-					reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$BadDescription)
-				});
-		} else {
-			if ($elm$core$List$isEmpty(tests)) {
-				return $elm_explorations$test$Test$Internal$failNow(
-					{
-						description: 'This `describe ' + (desc + '` has no tests in it. Let\'s give it some!'),
-						reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$EmptyList)
-					});
-			} else {
-				var _v0 = $elm_explorations$test$Test$Internal$duplicatedName(tests);
-				if (_v0.$ === 'Err') {
-					var duped = _v0.a;
-					return $elm_explorations$test$Test$Internal$failNow(
-						{
-							description: 'The tests \'' + (desc + ('\' contain multiple tests named \'' + (duped + '\'. Let\'s rename them so we know which is which.'))),
-							reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
-						});
-				} else {
-					var childrenNames = _v0.a;
-					return A2($elm$core$Set$member, desc, childrenNames) ? $elm_explorations$test$Test$Internal$failNow(
-						{
-							description: 'The test \'' + (desc + '\' contains a child test of the same name. Let\'s rename them so we know which is which.'),
-							reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
-						}) : A2(
-						$elm_explorations$test$Test$Internal$Labeled,
-						desc,
-						$elm_explorations$test$Test$Internal$Batch(tests));
-				}
-			}
-		}
 	});
 var $author$project$Parsing$Ingredient = F3(
 	function (q, unit, rest) {
@@ -3304,6 +2849,9 @@ var $elm$parser$Parser$Advanced$Good = F3(
 	function (a, b, c) {
 		return {$: 'Good', a: a, b: b, c: c};
 	});
+var $elm$core$Basics$identity = function (x) {
+	return x;
+};
 var $elm$parser$Parser$Advanced$Parser = function (a) {
 	return {$: 'Parser', a: a};
 };
@@ -3351,15 +2899,44 @@ var $elm$parser$Parser$Advanced$keeper = F2(
 		return A3($elm$parser$Parser$Advanced$map2, $elm$core$Basics$apL, parseFunc, parseArg);
 	});
 var $elm$parser$Parser$keeper = $elm$parser$Parser$Advanced$keeper;
+var $elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
+var $elm$core$Basics$False = {$: 'False'};
+var $elm$parser$Parser$Advanced$backtrackable = function (_v0) {
+	var parse = _v0.a;
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s0) {
+			var _v1 = parse(s0);
+			if (_v1.$ === 'Bad') {
+				var x = _v1.b;
+				return A2($elm$parser$Parser$Advanced$Bad, false, x);
+			} else {
+				var a = _v1.b;
+				var s1 = _v1.c;
+				return A3($elm$parser$Parser$Advanced$Good, false, a, s1);
+			}
+		});
+};
+var $elm$parser$Parser$backtrackable = $elm$parser$Parser$Advanced$backtrackable;
 var $elm$parser$Parser$ExpectingFloat = {$: 'ExpectingFloat'};
+var $elm$core$Result$Err = function (a) {
+	return {$: 'Err', a: a};
+};
+var $elm$core$Result$Ok = function (a) {
+	return {$: 'Ok', a: a};
+};
+var $elm$core$Basics$add = _Basics_add;
 var $elm$parser$Parser$Advanced$consumeBase = _Parser_consumeBase;
 var $elm$parser$Parser$Advanced$consumeBase16 = _Parser_consumeBase16;
+var $elm$core$Basics$True = {$: 'True'};
 var $elm$core$Basics$sub = _Basics_sub;
 var $elm$parser$Parser$Advanced$bumpOffset = F2(
 	function (newOffset, s) {
 		return {col: s.col + (newOffset - s.offset), context: s.context, indent: s.indent, offset: newOffset, row: s.row, src: s.src};
 	});
 var $elm$parser$Parser$Advanced$chompBase10 = _Parser_chompBase10;
+var $elm$core$Basics$eq = _Utils_equal;
 var $elm$parser$Parser$Advanced$isAsciiCode = _Parser_isAsciiCode;
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -3540,6 +3117,113 @@ var $elm$parser$Parser$Advanced$float = F2(
 			});
 	});
 var $elm$parser$Parser$float = A2($elm$parser$Parser$Advanced$float, $elm$parser$Parser$ExpectingFloat, $elm$parser$Parser$ExpectingFloat);
+var $author$project$Parsing$Frac = F2(
+	function (num, deno) {
+		return {deno: deno, num: num};
+	});
+var $elm$core$Basics$fdiv = _Basics_fdiv;
+var $elm$parser$Parser$ExpectingInt = {$: 'ExpectingInt'};
+var $elm$parser$Parser$Advanced$int = F2(
+	function (expecting, invalid) {
+		return $elm$parser$Parser$Advanced$number(
+			{
+				binary: $elm$core$Result$Err(invalid),
+				expecting: expecting,
+				_float: $elm$core$Result$Err(invalid),
+				hex: $elm$core$Result$Err(invalid),
+				_int: $elm$core$Result$Ok($elm$core$Basics$identity),
+				invalid: invalid,
+				octal: $elm$core$Result$Err(invalid)
+			});
+	});
+var $elm$parser$Parser$int = A2($elm$parser$Parser$Advanced$int, $elm$parser$Parser$ExpectingInt, $elm$parser$Parser$ExpectingInt);
+var $elm$parser$Parser$Advanced$map = F2(
+	function (func, _v0) {
+		var parse = _v0.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Good') {
+					var p = _v1.a;
+					var a = _v1.b;
+					var s1 = _v1.c;
+					return A3(
+						$elm$parser$Parser$Advanced$Good,
+						p,
+						func(a),
+						s1);
+				} else {
+					var p = _v1.a;
+					var x = _v1.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				}
+			});
+	});
+var $elm$parser$Parser$map = $elm$parser$Parser$Advanced$map;
+var $elm$parser$Parser$Advanced$succeed = function (a) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A3($elm$parser$Parser$Advanced$Good, false, a, s);
+		});
+};
+var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
+var $elm$parser$Parser$ExpectingSymbol = function (a) {
+	return {$: 'ExpectingSymbol', a: a};
+};
+var $elm$parser$Parser$Advanced$Token = F2(
+	function (a, b) {
+		return {$: 'Token', a: a, b: b};
+	});
+var $elm$core$String$isEmpty = function (string) {
+	return string === '';
+};
+var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
+var $elm$core$Basics$not = _Basics_not;
+var $elm$parser$Parser$Advanced$token = function (_v0) {
+	var str = _v0.a;
+	var expecting = _v0.b;
+	var progress = !$elm$core$String$isEmpty(str);
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			var _v1 = A5($elm$parser$Parser$Advanced$isSubString, str, s.offset, s.row, s.col, s.src);
+			var newOffset = _v1.a;
+			var newRow = _v1.b;
+			var newCol = _v1.c;
+			return _Utils_eq(newOffset, -1) ? A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A2($elm$parser$Parser$Advanced$fromState, s, expecting)) : A3(
+				$elm$parser$Parser$Advanced$Good,
+				progress,
+				_Utils_Tuple0,
+				{col: newCol, context: s.context, indent: s.indent, offset: newOffset, row: newRow, src: s.src});
+		});
+};
+var $elm$parser$Parser$Advanced$symbol = $elm$parser$Parser$Advanced$token;
+var $elm$parser$Parser$symbol = function (str) {
+	return $elm$parser$Parser$Advanced$symbol(
+		A2(
+			$elm$parser$Parser$Advanced$Token,
+			str,
+			$elm$parser$Parser$ExpectingSymbol(str)));
+};
+var $author$project$Parsing$fraction = A2(
+	$elm$parser$Parser$map,
+	function (_v0) {
+		var num = _v0.num;
+		var deno = _v0.deno;
+		return num / deno;
+	},
+	A2(
+		$elm$parser$Parser$keeper,
+		A2(
+			$elm$parser$Parser$keeper,
+			$elm$parser$Parser$succeed($author$project$Parsing$Frac),
+			A2(
+				$elm$parser$Parser$ignorer,
+				$elm$parser$Parser$int,
+				$elm$parser$Parser$symbol('/'))),
+		$elm$parser$Parser$int));
 var $elm$parser$Parser$Advanced$Append = F2(
 	function (a, b) {
 		return {$: 'Append', a: a, b: b};
@@ -3641,23 +3325,36 @@ var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 			_Utils_chr('\r')));
 	});
 var $elm$parser$Parser$spaces = $elm$parser$Parser$Advanced$spaces;
-var $elm$parser$Parser$Advanced$succeed = function (a) {
-	return $elm$parser$Parser$Advanced$Parser(
-		function (s) {
-			return A3($elm$parser$Parser$Advanced$Good, false, a, s);
-		});
-};
-var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
 var $author$project$Parsing$parseQuantity = $elm$parser$Parser$oneOf(
 	_List_fromArray(
 		[
+			$elm$parser$Parser$backtrackable(
+			A2(
+				$elm$parser$Parser$keeper,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed($elm$core$Maybe$Just),
+					$elm$parser$Parser$spaces),
+				A2(
+					$elm$parser$Parser$ignorer,
+					A2(
+						$elm$parser$Parser$ignorer,
+						$elm$parser$Parser$float,
+						$elm$parser$Parser$symbol(' ')),
+					$elm$parser$Parser$spaces))),
 			A2(
 			$elm$parser$Parser$keeper,
 			A2(
 				$elm$parser$Parser$ignorer,
 				$elm$parser$Parser$succeed($elm$core$Maybe$Just),
 				$elm$parser$Parser$spaces),
-			A2($elm$parser$Parser$ignorer, $elm$parser$Parser$float, $elm$parser$Parser$spaces)),
+			A2(
+				$elm$parser$Parser$ignorer,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$author$project$Parsing$fraction,
+					$elm$parser$Parser$symbol(' ')),
+				$elm$parser$Parser$spaces)),
 			$elm$parser$Parser$succeed($elm$core$Maybe$Nothing)
 		]));
 var $elm$parser$Parser$chompWhile = $elm$parser$Parser$Advanced$chompWhile;
@@ -3697,15 +3394,120 @@ var $author$project$Parsing$parseRest = $elm$parser$Parser$getChompedString(
 		}));
 var $author$project$Parsing$abbrevs = _List_fromArray(
 	['g', 'kg', 'L', 'mL', 'tsp', 'tbsp', 'fl oz', 'fl.oz', 'fl. oz', 'oz', 'C', 'pt', 'qt', 'gal', 'pn', 'dr']);
+var $elm$core$Basics$append = _Utils_append;
 var $author$project$Parsing$bases = _List_fromArray(
 	['gram', 'kilogram', 'litre', 'millilitre', 'teaspoon', 'tablespoon', 'fluid ounce', 'ounce', 'cup', 'pint', 'quart', 'gallon', 'pinch', 'drop']);
+var $elm$core$List$foldl = F3(
+	function (func, acc, list) {
+		foldl:
+		while (true) {
+			if (!list.b) {
+				return acc;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				var $temp$func = func,
+					$temp$acc = A2(func, x, acc),
+					$temp$list = xs;
+				func = $temp$func;
+				acc = $temp$acc;
+				list = $temp$list;
+				continue foldl;
+			}
+		}
+	});
+var $elm$core$Basics$gt = _Utils_gt;
+var $elm$core$List$reverse = function (list) {
+	return A3($elm$core$List$foldl, $elm$core$List$cons, _List_Nil, list);
+};
+var $elm$core$List$foldrHelper = F4(
+	function (fn, acc, ctr, ls) {
+		if (!ls.b) {
+			return acc;
+		} else {
+			var a = ls.a;
+			var r1 = ls.b;
+			if (!r1.b) {
+				return A2(fn, a, acc);
+			} else {
+				var b = r1.a;
+				var r2 = r1.b;
+				if (!r2.b) {
+					return A2(
+						fn,
+						a,
+						A2(fn, b, acc));
+				} else {
+					var c = r2.a;
+					var r3 = r2.b;
+					if (!r3.b) {
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(fn, c, acc)));
+					} else {
+						var d = r3.a;
+						var r4 = r3.b;
+						var res = (ctr > 500) ? A3(
+							$elm$core$List$foldl,
+							fn,
+							acc,
+							$elm$core$List$reverse(r4)) : A4($elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(
+									fn,
+									c,
+									A2(fn, d, res))));
+					}
+				}
+			}
+		}
+	});
+var $elm$core$List$foldr = F3(
+	function (fn, acc, ls) {
+		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						$elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
 var $elm$parser$Parser$ExpectingKeyword = function (a) {
 	return {$: 'ExpectingKeyword', a: a};
 };
-var $elm$parser$Parser$Advanced$Token = F2(
-	function (a, b) {
-		return {$: 'Token', a: a, b: b};
-	});
 var $elm$core$Basics$and = _Basics_and;
 var $elm$core$Basics$le = _Utils_le;
 var $elm$core$Char$toCode = _Char_toCode;
@@ -3724,8 +3526,6 @@ var $elm$core$Char$isUpper = function (_char) {
 var $elm$core$Char$isAlphaNum = function (_char) {
 	return $elm$core$Char$isLower(_char) || ($elm$core$Char$isUpper(_char) || $elm$core$Char$isDigit(_char));
 };
-var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
-var $elm$core$Basics$not = _Basics_not;
 var $elm$parser$Parser$Advanced$keyword = function (_v0) {
 	var kwd = _v0.a;
 	var expecting = _v0.b;
@@ -3761,6 +3561,11 @@ var $elm$parser$Parser$keyword = function (kwd) {
 			kwd,
 			$elm$parser$Parser$ExpectingKeyword(kwd)));
 };
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
 var $elm$regex$Regex$Match = F4(
 	function (match, index, number, submatches) {
 		return {index: index, match: match, number: number, submatches: submatches};
@@ -4148,6 +3953,15 @@ var $elm_explorations$test$Test$Runner$Failure$Equality = F2(
 	});
 var $elm$core$String$contains = _String_contains;
 var $elm_explorations$test$Test$Runner$Failure$Custom = {$: 'Custom'};
+var $elm_explorations$test$Test$Expectation$Fail = function (a) {
+	return {$: 'Fail', a: a};
+};
+var $elm_explorations$test$Test$Expectation$fail = function (_v0) {
+	var description = _v0.description;
+	var reason = _v0.reason;
+	return $elm_explorations$test$Test$Expectation$Fail(
+		{description: description, given: $elm$core$Maybe$Nothing, reason: reason});
+};
 var $elm_explorations$test$Expect$fail = function (str) {
 	return $elm_explorations$test$Test$Expectation$fail(
 		{description: str, reason: $elm_explorations$test$Test$Runner$Failure$Custom});
@@ -4188,11 +4002,32 @@ var $elm_explorations$test$Expect$equateWith = F4(
 		return usesFloats ? $elm_explorations$test$Expect$fail(floatError) : A5($elm_explorations$test$Expect$testWith, $elm_explorations$test$Test$Runner$Failure$Equality, reason, comparison, b, a);
 	});
 var $elm_explorations$test$Expect$equal = A2($elm_explorations$test$Expect$equateWith, 'Expect.equal', $elm$core$Basics$eq);
+var $elm_explorations$test$Test$Internal$Labeled = F2(
+	function (a, b) {
+		return {$: 'Labeled', a: a, b: b};
+	});
+var $elm_explorations$test$Test$Internal$UnitTest = function (a) {
+	return {$: 'UnitTest', a: a};
+};
+var $elm_explorations$test$Test$Runner$Failure$BadDescription = {$: 'BadDescription'};
+var $elm_explorations$test$Test$Runner$Failure$Invalid = function (a) {
+	return {$: 'Invalid', a: a};
+};
+var $elm_explorations$test$Test$Internal$failNow = function (record) {
+	return $elm_explorations$test$Test$Internal$UnitTest(
+		function (_v0) {
+			return _List_fromArray(
+				[
+					$elm_explorations$test$Test$Expectation$fail(record)
+				]);
+		});
+};
 var $elm_explorations$test$Test$Internal$blankDescriptionFailure = $elm_explorations$test$Test$Internal$failNow(
 	{
 		description: 'This test has a blank description. Let\'s give it a useful one!',
 		reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$BadDescription)
 	});
+var $elm$core$String$trim = _String_trim;
 var $elm_explorations$test$Test$test = F2(
 	function (untrimmedDesc, thunk) {
 		var desc = $elm$core$String$trim(untrimmedDesc);
@@ -4207,6 +4042,320 @@ var $elm_explorations$test$Test$test = F2(
 						]);
 				}));
 	});
+var $author$project$Example$bad_number_1 = A2(
+	$elm_explorations$test$Test$test,
+	'more than 1 decimal point: remove',
+	function (_v0) {
+		var output = {q: $elm$core$Maybe$Nothing, rest: '', unit: $elm$core$Maybe$Nothing};
+		var input = '2.5.24  cups water';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$Example$bad_number_2 = A2(
+	$elm_explorations$test$Test$test,
+	'more than 1 slash: remove',
+	function (_v0) {
+		var output = {q: $elm$core$Maybe$Nothing, rest: '', unit: $elm$core$Maybe$Nothing};
+		var input = '2/5/24  cups water';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $elm_explorations$test$Test$Internal$Batch = function (a) {
+	return {$: 'Batch', a: a};
+};
+var $elm_explorations$test$Test$Runner$Failure$DuplicatedName = {$: 'DuplicatedName'};
+var $elm_explorations$test$Test$Runner$Failure$EmptyList = {$: 'EmptyList'};
+var $elm$core$Result$andThen = F2(
+	function (callback, result) {
+		if (result.$ === 'Ok') {
+			var value = result.a;
+			return callback(value);
+		} else {
+			var msg = result.a;
+			return $elm$core$Result$Err(msg);
+		}
+	});
+var $elm$core$Set$Set_elm_builtin = function (a) {
+	return {$: 'Set_elm_builtin', a: a};
+};
+var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$core$Set$empty = $elm$core$Set$Set_elm_builtin($elm$core$Dict$empty);
+var $elm$core$Dict$Black = {$: 'Black'};
+var $elm$core$Dict$RBNode_elm_builtin = F5(
+	function (a, b, c, d, e) {
+		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
+	});
+var $elm$core$Dict$Red = {$: 'Red'};
+var $elm$core$Dict$balance = F5(
+	function (color, key, value, left, right) {
+		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
+			var _v1 = right.a;
+			var rK = right.b;
+			var rV = right.c;
+			var rLeft = right.d;
+			var rRight = right.e;
+			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+				var _v3 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var lLeft = left.d;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					key,
+					value,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, lK, lV, lLeft, lRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					color,
+					rK,
+					rV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, left, rLeft),
+					rRight);
+			}
+		} else {
+			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
+				var _v5 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var _v6 = left.d;
+				var _v7 = _v6.a;
+				var llK = _v6.b;
+				var llV = _v6.c;
+				var llLeft = _v6.d;
+				var llRight = _v6.e;
+				var lRight = left.e;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					$elm$core$Dict$Red,
+					lK,
+					lV,
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, llK, llV, llLeft, llRight),
+					A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, lRight, right));
+			} else {
+				return A5($elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
+			}
+		}
+	});
+var $elm$core$Basics$compare = _Utils_compare;
+var $elm$core$Dict$insertHelp = F3(
+	function (key, value, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Red, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+		} else {
+			var nColor = dict.a;
+			var nKey = dict.b;
+			var nValue = dict.c;
+			var nLeft = dict.d;
+			var nRight = dict.e;
+			var _v1 = A2($elm$core$Basics$compare, key, nKey);
+			switch (_v1.$) {
+				case 'LT':
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						A3($elm$core$Dict$insertHelp, key, value, nLeft),
+						nRight);
+				case 'EQ':
+					return A5($elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
+				default:
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						nLeft,
+						A3($elm$core$Dict$insertHelp, key, value, nRight));
+			}
+		}
+	});
+var $elm$core$Dict$insert = F3(
+	function (key, value, dict) {
+		var _v0 = A3($elm$core$Dict$insertHelp, key, value, dict);
+		if ((_v0.$ === 'RBNode_elm_builtin') && (_v0.a.$ === 'Red')) {
+			var _v1 = _v0.a;
+			var k = _v0.b;
+			var v = _v0.c;
+			var l = _v0.d;
+			var r = _v0.e;
+			return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _v0;
+			return x;
+		}
+	});
+var $elm$core$Set$insert = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
+	});
+var $elm$core$Dict$get = F2(
+	function (targetKey, dict) {
+		get:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
+				switch (_v1.$) {
+					case 'LT':
+						var $temp$targetKey = targetKey,
+							$temp$dict = left;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+					case 'EQ':
+						return $elm$core$Maybe$Just(value);
+					default:
+						var $temp$targetKey = targetKey,
+							$temp$dict = right;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+				}
+			}
+		}
+	});
+var $elm$core$Dict$member = F2(
+	function (key, dict) {
+		var _v0 = A2($elm$core$Dict$get, key, dict);
+		if (_v0.$ === 'Just') {
+			return true;
+		} else {
+			return false;
+		}
+	});
+var $elm$core$Set$member = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return A2($elm$core$Dict$member, key, dict);
+	});
+var $elm_explorations$test$Test$Internal$duplicatedName = function () {
+	var names = function (test) {
+		names:
+		while (true) {
+			switch (test.$) {
+				case 'Labeled':
+					var str = test.a;
+					return _List_fromArray(
+						[str]);
+				case 'Batch':
+					var subtests = test.a;
+					return A2($elm$core$List$concatMap, names, subtests);
+				case 'UnitTest':
+					return _List_Nil;
+				case 'FuzzTest':
+					return _List_Nil;
+				case 'Skipped':
+					var subTest = test.a;
+					var $temp$test = subTest;
+					test = $temp$test;
+					continue names;
+				default:
+					var subTest = test.a;
+					var $temp$test = subTest;
+					test = $temp$test;
+					continue names;
+			}
+		}
+	};
+	var insertOrFail = function (newName) {
+		return $elm$core$Result$andThen(
+			function (oldNames) {
+				return A2($elm$core$Set$member, newName, oldNames) ? $elm$core$Result$Err(newName) : $elm$core$Result$Ok(
+					A2($elm$core$Set$insert, newName, oldNames));
+			});
+	};
+	return A2(
+		$elm$core$Basics$composeR,
+		$elm$core$List$concatMap(names),
+		A2(
+			$elm$core$List$foldl,
+			insertOrFail,
+			$elm$core$Result$Ok($elm$core$Set$empty)));
+}();
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm_explorations$test$Test$concat = function (tests) {
+	if ($elm$core$List$isEmpty(tests)) {
+		return $elm_explorations$test$Test$Internal$failNow(
+			{
+				description: 'This `concat` has no tests in it. Let\'s give it some!',
+				reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$EmptyList)
+			});
+	} else {
+		var _v0 = $elm_explorations$test$Test$Internal$duplicatedName(tests);
+		if (_v0.$ === 'Err') {
+			var duped = _v0.a;
+			return $elm_explorations$test$Test$Internal$failNow(
+				{
+					description: 'A test group contains multiple tests named \'' + (duped + '\'. Do some renaming so that tests have unique names.'),
+					reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
+				});
+		} else {
+			return $elm_explorations$test$Test$Internal$Batch(tests);
+		}
+	}
+};
+var $elm_explorations$test$Test$describe = F2(
+	function (untrimmedDesc, tests) {
+		var desc = $elm$core$String$trim(untrimmedDesc);
+		if ($elm$core$String$isEmpty(desc)) {
+			return $elm_explorations$test$Test$Internal$failNow(
+				{
+					description: 'This `describe` has a blank description. Let\'s give it a useful one!',
+					reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$BadDescription)
+				});
+		} else {
+			if ($elm$core$List$isEmpty(tests)) {
+				return $elm_explorations$test$Test$Internal$failNow(
+					{
+						description: 'This `describe ' + (desc + '` has no tests in it. Let\'s give it some!'),
+						reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$EmptyList)
+					});
+			} else {
+				var _v0 = $elm_explorations$test$Test$Internal$duplicatedName(tests);
+				if (_v0.$ === 'Err') {
+					var duped = _v0.a;
+					return $elm_explorations$test$Test$Internal$failNow(
+						{
+							description: 'The tests \'' + (desc + ('\' contain multiple tests named \'' + (duped + '\'. Let\'s rename them so we know which is which.'))),
+							reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
+						});
+				} else {
+					var childrenNames = _v0.a;
+					return A2($elm$core$Set$member, desc, childrenNames) ? $elm_explorations$test$Test$Internal$failNow(
+						{
+							description: 'The test \'' + (desc + '\' contains a child test of the same name. Let\'s rename them so we know which is which.'),
+							reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$DuplicatedName)
+						}) : A2(
+						$elm_explorations$test$Test$Internal$Labeled,
+						desc,
+						$elm_explorations$test$Test$Internal$Batch(tests));
+				}
+			}
+		}
+	});
 var $author$project$Example$floating = A2(
 	$elm_explorations$test$Test$test,
 	'floating',
@@ -4216,7 +4365,22 @@ var $author$project$Example$floating = A2(
 			rest: 'whole milk',
 			unit: $elm$core$Maybe$Just('cups')
 		};
-		var input = '2.5 cups whole milk';
+		var input = '2.5 cups  whole milk';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$Example$frac = A2(
+	$elm_explorations$test$Test$test,
+	'fraction',
+	function (_v0) {
+		var output = {
+			q: $elm$core$Maybe$Just(0.4),
+			rest: 'whole milk',
+			unit: $elm$core$Maybe$Just('cups')
+		};
+		var input = ' 2/5 cups  whole milk';
 		return A2(
 			$elm_explorations$test$Expect$equal,
 			$author$project$Parsing$asIngredient(input),
@@ -4422,7 +4586,6 @@ var $elm$core$Array$Array_elm_builtin = F4(
 	});
 var $elm$core$Elm$JsArray$empty = _JsArray_empty;
 var $elm$core$Basics$ceiling = _Basics_ceiling;
-var $elm$core$Basics$fdiv = _Basics_fdiv;
 var $elm$core$Basics$logBase = F2(
 	function (base, number) {
 		return _Basics_log(number) / _Basics_log(base);
@@ -4573,7 +4736,7 @@ var $author$project$Example$no_space = A2(
 			rest: 'vanilla extract  ',
 			unit: $elm$core$Maybe$Just('tablespoons')
 		};
-		var input = '20tablespoons vanilla extract  ';
+		var input = '20 tablespoons vanilla extract  ';
 		return A2(
 			$elm_explorations$test$Expect$equal,
 			$author$project$Parsing$asIngredient(input),
@@ -4600,10 +4763,10 @@ var $author$project$Example$no_unit = A2(
 	function (_v0) {
 		var output = {
 			q: $elm$core$Maybe$Just(2),
-			rest: 'eggs',
+			rest: '.eggs',
 			unit: $elm$core$Maybe$Nothing
 		};
-		var input = '2 eggs';
+		var input = '2 .eggs';
 		return A2(
 			$elm_explorations$test$Expect$equal,
 			$author$project$Parsing$asIngredient(input),
@@ -7470,7 +7633,7 @@ var $author$project$Test$Runner$Node$run = F2(
 				update: $author$project$Test$Runner$Node$update
 			});
 	});
-var $author$project$Test$Generated$Main2376639285$main = A2(
+var $author$project$Test$Generated$Main2376108762$main = A2(
 	$author$project$Test$Runner$Node$run,
 	{
 		paths: _List_fromArray(
@@ -7478,7 +7641,7 @@ var $author$project$Test$Generated$Main2376639285$main = A2(
 		processes: 4,
 		report: $author$project$Test$Reporter$Reporter$ConsoleReport($author$project$Console$Text$UseColor),
 		runs: $elm$core$Maybe$Nothing,
-		seed: 200560790951425
+		seed: 90670934784854
 	},
 	$elm_explorations$test$Test$concat(
 		_List_fromArray(
@@ -7487,12 +7650,12 @@ var $author$project$Test$Generated$Main2376639285$main = A2(
 				$elm_explorations$test$Test$describe,
 				'Example',
 				_List_fromArray(
-					[$author$project$Example$floating, $author$project$Example$full, $author$project$Example$no_number, $author$project$Example$no_space, $author$project$Example$no_trailing, $author$project$Example$no_unit]))
+					[$author$project$Example$bad_number_1, $author$project$Example$bad_number_2, $author$project$Example$floating, $author$project$Example$frac, $author$project$Example$full, $author$project$Example$no_number, $author$project$Example$no_space, $author$project$Example$no_trailing, $author$project$Example$no_unit]))
 			])));
-_Platform_export({'Test':{'Generated':{'Main2376639285':{'init':$author$project$Test$Generated$Main2376639285$main($elm$json$Json$Decode$int)(0)}}}});}(this));
+_Platform_export({'Test':{'Generated':{'Main2376108762':{'init':$author$project$Test$Generated$Main2376108762$main($elm$json$Json$Decode$int)(0)}}}});}(this));
 return this.Elm;
 })({});
-var pipeFilename = "\\\\.\\pipe\\elm_test-403708-1";
+var pipeFilename = "\\\\.\\pipe\\elm_test-1267232-1";
 // Make sure necessary things are defined.
 if (typeof Elm === "undefined") {
   throw "test runner config error: Elm is not defined. Make sure you provide a file compiled by Elm!";
