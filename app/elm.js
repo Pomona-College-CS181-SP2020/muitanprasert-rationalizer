@@ -7418,7 +7418,7 @@ var $author$project$HomePage$stringize = function (l) {
 						var v = A2($myrho$elm_round$Round$ceiling, 0, a / 1000);
 						var real = $elm$core$String$fromFloat(
 							$author$project$HomePage$twoDecimal(a / 1000));
-						return (v === '1') ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + (' (exact quantity = ' + (real + ')'))))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + (' (exact quantity = ' + (real + ')')))));
+						return (v === '1') ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + (' (use ' + (real + ')'))))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + (' (use ' + (real + ')')))));
 					} else {
 						var a = _v1.a.a;
 						var u = _v1.b.a;
