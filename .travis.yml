@@ -1,5 +1,5 @@
 language: elm
-elm: 0.19.0
+elm: 0.19.0-bugfix6
 
 before_script:
   - elm-format src/ --yes
@@ -8,6 +8,6 @@ before_script:
 cache:
   directories: # so subsequent builds run faster
     - $HOME/.npm
-    
+
 notifications:
   email: false
