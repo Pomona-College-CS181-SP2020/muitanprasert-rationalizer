@@ -14,6 +14,6 @@ Implemented in Elm (tentative).
 ## Notes
 * Travis CI building with version 0.19.0
 * Next steps:
-    * Pluralize/singularize: how to handle abbreviations?
-    * Unscalable ingredients: round up things without units
-    * Fraction and number words...
+    * HTML tests
+    * Test and debug number words
+    * Rearranging...

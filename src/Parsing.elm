@@ -39,8 +39,12 @@ bases =
   , "drop" ]
 
 units : List (Parser ())
-units = List.concatMap (\b -> [keyword (b++"."), keyword b, keyword (pascalize b)]) abbrevs
-     ++ List.concatMap (\b -> [keyword (pluralize b), keyword b]) bases
+units = List.concatMap (
+          \b -> [keyword (b++"."), keyword b, keyword (pascalize b)]
+          ) abbrevs
+     ++ List.concatMap (
+          \b -> [keyword (pluralize b), keyword b]
+          ) bases
 
 type alias Frac = { num : Int, deno : Int }
 
@@ -60,11 +64,12 @@ parseQuantity =
             |= float
             |. symbol " " --requires a space after quantity
             |. spaces )
-        , succeed Just
+        , backtrackable ( succeed Just
             |. spaces
             |= fraction
             |. symbol " " --requires a space after quantity
-            |. spaces
+            |. spaces )
+        , numWord
         , succeed Nothing
         ]
 
@@ -95,3 +100,71 @@ asIngredient str =
     case (run parseLine str) of
       Err _ -> {q=Nothing, unit=Nothing, rest=""} --no input should ever trigger this??
       Ok x -> x
+
+
+--Number words parsing
+
+ones = [("a", 0), ("one",1), ("two",2), ("three",3), ("four",4), ("five",5),
+        ("six",6), ("seven",7), ("eight",8), ("nine",9), ("ten",10),
+        ("eleven",11), ("twelve",12), ("thirteen",13), ("fourteen",14),
+        ("fifteen",15), ("sixteen",16), ("seventeen",17), ("eighteen",18), ("nineteen",19)]
+
+tens = [("ten",10), ("twenty",20), ("thirty",30), ("forty",40), ("fifty",50),
+        ("sixty",60), ("seventy",70), ("eighty",80), ("ninety",90)]
+
+multipliers = [("and", -1), ("hundred", -100), ("thousand", -1000),
+               ("half", -0.5), ("quarter", -0.25)]
+
+allNums : List (Parser Float)
+allNums = List.concatMap (
+              \(word, num) ->
+                [ map (\_ -> num) (keyword word)
+                , map (\_ -> num) (keyword (pascalize word))
+                ]
+              ) ( ones
+                  ++ tens
+                  ++ multipliers )
+
+numWord : Parser (Maybe Float)
+numWord = 
+  let
+      ls = loop [] numWordHelp --Parser (List Float)
+  in
+      map calculate ls
+
+calculate : List Float -> Maybe Float
+calculate ls =
+  case ls of
+    [] -> Nothing
+    (x::xs) -> Just (calculateHelp 0 0 (x::xs))
+
+calculateHelp : Float -> Float -> List Float -> Float
+calculateHelp prev cur rest =
+    case rest of
+      [] -> prev + cur
+      (x::xs) ->
+          if x == 0
+          then calculateHelp prev 1 xs
+          else
+              if List.member x (Tuple.second (List.unzip multipliers))
+              then calculateHelp (prev+cur*x*(-1)) 0 xs
+              else calculateHelp prev (cur+x) xs
+
+
+numWordHelp : List Float -> Parser (Step (List Float) (List Float))
+numWordHelp revNums =
+  oneOf
+    [ succeed (\n -> Loop (n :: revNums))
+        |. spaces
+        |= parseNumWord
+        |. spaces
+    , succeed ()
+        |> map (\_ -> Done (List.reverse revNums))
+    ]
+
+parseNumWord : Parser Float
+parseNumWord =
+    succeed identity
+      |. spaces
+      |= oneOf allNums
+      |. spaces

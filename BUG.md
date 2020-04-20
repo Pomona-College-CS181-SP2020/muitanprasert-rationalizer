@@ -8,3 +8,5 @@ Problem: Can't get Travis CI to build the very simple version
 Problem: If quantity is illegal number, "sometimes" parser wouldn't read the rest at all.
 
 2020-04-12: Works if the quantity is missing altogether. Still returns rest="" if there is number but it's wrong (e.g. 2.2.4 cups of water)
+
+2020-04-12: Accidentally solved with the addition backtrackable to facilitate number words functionality
