@@ -4,17 +4,27 @@ import Browser
 import Html exposing (Html, Attribute, button, div, text, node, span, label, input, textarea, h1, h3, p)
 import Html.Attributes exposing (style, class, name, placeholder, for, attribute, id, step, value, type_, max, min, href, rel, lang)
 import Html.Events exposing (..)
+import Element
+import Element.Font
+
+import DnDList
 import Array exposing (..)
 import String
 import Parsing exposing (Ingredient, asIngredient)
 import Round
 import Inflect exposing (pluralize, singularize)
 
+
 -- MAIN
 
 
 main =
-  Browser.sandbox { init = init, update = update, view = view }
+  Browser.element
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions
+    }
 
 
 
@@ -22,18 +32,46 @@ main =
 
 
 type alias Model = 
-  { content: Array Ingredient
+  { content: List Ingredient
   , temp: String
   , scale: Float
-  , modalOn: Bool }
+  , warningText : String
+  , dnd : DnDList.Model }
 
 
-init : Model
-init = 
-  { content = Array.empty
+init : () -> ( Model, Cmd Msg )
+init _ = (
+  { content = [{q=Just 2500, unit=Just "cups", rest="whole milk"}]
   , temp = ""
   , scale = 1.0
-  , modalOn = False }
+  , warningText = ""
+  , dnd = system.model 
+  }
+  , Cmd.none )
+
+
+
+-- SYSTEM
+
+
+config : DnDList.Config Ingredient
+config =
+    { beforeUpdate = \_ _ list -> list
+    , movement = DnDList.Free
+    , listen = DnDList.OnDrag
+    , operation = DnDList.Rotate
+    }
+
+system : DnDList.System Ingredient Msg
+system = DnDList.create config MyMsg
+
+
+
+-- SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    system.subscriptions model.dnd
 
 
 
@@ -47,45 +85,57 @@ type Msg
   | Delete Int
   | Scale String
   | ShowWarning (List Ingredient)
+  | MyMsg DnDList.Msg
 
-update : Msg -> Model -> Model
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
   case action of
     UpdateContent s ->
-        { model | temp = s }
+        ( { model | temp = s }, Cmd.none )
     Submit ->
         let
             items = ingredientize (String.split "\n" model.temp)
-            m1 = update (ShowWarning items) model
-            m2 = { m1 | content = Array.append m1.content (fromList items) }
+            ( m1, _ ) = update (ShowWarning items) model
+            m2 = { m1 | content = List.append m1.content items }
         in
             update Clear m2
     Clear ->
-        { model | temp = "" }
+        ( { model | temp = "" }, Cmd.none )
     Delete i ->
-        { model | content = deleteAt i model.content }
+        ( { model | content = deleteAt i model.content }, Cmd.none )
     Scale v ->
         let
             origScale = model.scale
             newScale = String.toFloat v |> Maybe.withDefault 1
         in
-            { model | scale = newScale
+            ( { model | scale = newScale
                     , content = scaleContent (newScale/origScale) model.content }
+            , Cmd.none )
     ShowWarning items ->
-        if illegalInput items
-        then { model | modalOn = True }
-        else { model | modalOn = False }
+        ( { model | warningText = illegalInput items }, Cmd.none )
+    MyMsg msg ->
+        let
+            ( dnd, items ) =
+                system.update msg model.dnd model.content
+            in
+            ( { model | dnd = dnd, content = items }
+            , system.commands dnd
+            )
+        
 
-deleteAt : Int -> Array a -> Array a
+
+deleteAt : Int -> List a -> List a
 deleteAt i l =
   let
-    front = Array.slice 0 i l
-    back = Array.slice (i+1) (Array.length l) l
+    array = Array.fromList l
+    front = Array.slice 0 i array
+    back = Array.slice (i+1) (length array) array
   in
-    Array.append front back
+    Array.toList (Array.append front back)
 
-scaleContent : Float -> Array Ingredient -> Array Ingredient
-scaleContent scale = Array.map (\{q, unit, rest} ->
+scaleContent : Float -> List Ingredient -> List Ingredient
+scaleContent scale = List.map (\{q, unit, rest} ->
     case q of
       Nothing -> {q=q, unit=unit, rest=rest}
       Just a -> {q=Just (twoDecimal (a*scale)), unit=unit, rest=rest})
@@ -93,11 +143,17 @@ scaleContent scale = Array.map (\{q, unit, rest} ->
 twoDecimal : Float -> Float
 twoDecimal x = (Basics.toFloat (Basics.round (x*100)))/100
 
-illegalInput : List Ingredient -> Bool
-illegalInput = List.foldr (\x xs -> 
-    x.q == Nothing
-    || String.isEmpty x.rest
-    || xs) False
+illegalInput : List Ingredient -> String
+illegalInput ls =
+    let
+        ingr = List.foldr (\x xs -> String.isEmpty x.rest || xs) False ls
+        quan = List.foldr (\x xs -> x.q == Nothing || xs) False ls
+    in
+        case (ingr, quan) of
+            (True, False) -> "Your last batch has underspecified items(s)."
+            (False, True) -> "Your last batch contains unsupported quantity."
+            (True, True) -> "Your last batch has illegal input(s)."
+            (False, False) -> ""
 
 ingredientize : List String -> List Ingredient
 ingredientize = List.map (\str ->
@@ -109,21 +165,25 @@ ingredientize = List.map (\str ->
             Just x -> {q=Just (x*1000), unit=unit, rest=rest} --keep quantity x1000 for precision
     )
 
-stringize : Array Ingredient -> Array String
-stringize l = Array.filter (\s -> not (String.isEmpty s))
-    ( Array.map (\ {q,unit,rest} ->
-        case (q,unit) of
-        (Nothing, Nothing) -> rest
-        (Nothing, Just u) -> u ++ " " ++ rest
+stringize : List Ingredient -> List String
+stringize l = List.filter (\s -> not (String.isEmpty s))
+    ( List.map stringizeItem l )
+
+
+stringizeItem : Ingredient -> String
+stringizeItem {q, unit, rest} = 
+    case (q,unit) of
+        (Nothing, Nothing) -> "Some " ++ rest
+        (Nothing, Just u) -> "~" ++ u ++ " " ++ rest
         (Just a, Nothing) -> 
             let
                 v = Round.ceiling 0 (a/1000)
                 real = String.fromFloat (twoDecimal (a/1000))
             in
-                if v == "1"
+                if v == "1" || rest == ""
                 then v ++ " " ++ (singularize rest) ++ " (use " ++ real ++ ")"
                 else v ++ " " ++ (pluralize rest) ++ " (use " ++ real ++ ")"
-        (Just a, Just u) -> (String.fromFloat (twoDecimal (a/1000))) ++ " " ++ u ++ " " ++ rest ) l )
+        (Just a, Just u) -> (String.fromFloat (twoDecimal (a/1000))) ++ " " ++ u ++ " " ++ rest
 
 
 -- VIEW
@@ -150,15 +210,11 @@ view model =
                     [ button [ class "contact100-form-btn", onClick Submit ]
                         [ text "Add ingredient list to recipe" ]
                     ]
-                , case model.modalOn of
-                    True ->
-                        div [ attribute "style" "width:500px;height:100px;" ]
-                            [ div [ attribute "style" "width:500px;height:10px;" ] []
-                            , span [ attribute "style" "color: red;" ]
-                              [ text "WARNING: Last recipe batch contains underspecified item(s)." ]
-                            ]
-                    False ->
-                        div [ attribute "style" "width:500px;height:100px;" ] []
+                , div [ attribute "style" "width:500px;height:100px;" ]
+                    [ div [ attribute "style" "width:500px;height:10px;" ] []
+                    , span [ attribute "style" "color: red;" ]
+                        [ text model.warningText ]
+                    ]
                 , div [ class "slidecontainer" ]
                     [ span [ attribute "style" "width: 100%; display: block;font-family: Montserrat-SemiBold;font-size: 20px;color: #333333;line-height: 1.2;text-align: center;margin-bottom: 1em;" ]
                         [ text "How many servings?" ]
@@ -171,12 +227,64 @@ view model =
                 ]
             , div [ class "contact100-more flex-col-c-m", attribute "style" "background-image: url('images/bg-02.jpg');" ]
                 [ div [ attribute "style" "width:65%; height:80%; background-color: white; opacity: 0.8; padding: 2em; overflow:auto;" ]
-                    [ div [] (Array.indexedMap viewButton (stringize model.content) |> toList)
-                    ]
+                    [ div [] (List.indexedMap viewButton (stringize model.content)) ]
                 ]
             ]
         ]
-        
+
+
+itemView : DnDList.Model -> Int -> Ingredient -> Element.Element Msg
+itemView dnd index ingr =
+    let
+        item = stringizeItem ingr
+        itemId =
+            "id-" ++ item
+    in
+    case system.info dnd of
+        Just { dragIndex } ->
+            if dragIndex /= index then
+                Element.el
+                    (Element.Font.color (Element.rgb 1 1 1)
+                        :: Element.htmlAttribute (Html.Attributes.id itemId)
+                        :: List.map Element.htmlAttribute (system.dropEvents index itemId)
+                    )
+                    (Element.text item)
+
+            else
+                Element.el
+                    [ Element.Font.color (Element.rgb 1 1 1)
+                    , Element.htmlAttribute (Html.Attributes.id itemId)
+                    ]
+                    (Element.text "[---------]")
+
+        Nothing ->
+            Element.el
+                (Element.Font.color (Element.rgb 1 1 1)
+                    :: Element.htmlAttribute (Html.Attributes.id itemId)
+                    :: List.map Element.htmlAttribute (system.dragEvents index itemId)
+                )
+                (Element.text item)
+
+
+ghostView : DnDList.Model -> List Ingredient -> Element.Element Msg
+ghostView dnd items =
+    let
+        maybeDragItem : Maybe Ingredient
+        maybeDragItem =
+            system.info dnd
+                |> Maybe.andThen (\{ dragIndex } -> items |> List.drop dragIndex |> List.head)
+    in
+    case maybeDragItem of
+        Just item ->
+            Element.el
+                (Element.Font.color (Element.rgb 1 1 1)
+                    :: List.map Element.htmlAttribute (system.ghostStyles dnd)
+                )
+                (Element.text (stringizeItem item))
+
+        Nothing ->
+            Element.none
+
 
 viewButton : Int -> String -> Html Msg
 viewButton i val =

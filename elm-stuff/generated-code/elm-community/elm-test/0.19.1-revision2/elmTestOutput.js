@@ -3224,49 +3224,152 @@ var $author$project$Parsing$fraction = A2(
 				$elm$parser$Parser$int,
 				$elm$parser$Parser$symbol('/'))),
 		$elm$parser$Parser$int));
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
+var $elm$core$Basics$and = _Basics_and;
+var $elm$core$Basics$ge = _Utils_ge;
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $elm$core$Basics$mul = _Basics_mul;
+var $author$project$Parsing$calculateHelp = F4(
+	function (bound, prev, cur, rest) {
+		calculateHelp:
 		while (true) {
-			if (!list.b) {
-				return false;
+			if (!rest.b) {
+				return prev + cur;
 			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
+				var x = rest.a;
+				var xs = rest.b;
+				if (!x) {
+					var $temp$bound = bound,
+						$temp$prev = prev,
+						$temp$cur = 1,
+						$temp$rest = xs;
+					bound = $temp$bound;
+					prev = $temp$prev;
+					cur = $temp$cur;
+					rest = $temp$rest;
+					continue calculateHelp;
 				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
+					if (x < 0) {
+						var chunk = (cur * x) * (-1);
+						if ((_Utils_cmp(chunk, bound) > -1) || ((!chunk) && (_Utils_cmp(x, -1) < 0))) {
+							return -10000000;
+						} else {
+							var $temp$bound = A2($elm$core$Basics$min, bound, chunk),
+								$temp$prev = prev + chunk,
+								$temp$cur = 0,
+								$temp$rest = xs;
+							bound = $temp$bound;
+							prev = $temp$prev;
+							cur = $temp$cur;
+							rest = $temp$rest;
+							continue calculateHelp;
+						}
+					} else {
+						var $temp$bound = bound,
+							$temp$prev = prev,
+							$temp$cur = cur + x,
+							$temp$rest = xs;
+						bound = $temp$bound;
+						prev = $temp$prev;
+						cur = $temp$cur;
+						rest = $temp$rest;
+						continue calculateHelp;
+					}
 				}
 			}
 		}
 	});
-var $elm$core$List$member = F2(
-	function (x, xs) {
-		return A2(
-			$elm$core$List$any,
-			function (a) {
-				return _Utils_eq(a, x);
-			},
-			xs);
-	});
-var $elm$core$Basics$mul = _Basics_mul;
-var $author$project$Parsing$multipliers = _List_fromArray(
-	[
-		_Utils_Tuple2('and', -1),
-		_Utils_Tuple2('hundred', -100),
-		_Utils_Tuple2('thousand', -1000),
-		_Utils_Tuple2('half', -0.5),
-		_Utils_Tuple2('quarter', -0.25)
-	]);
-var $elm$core$Tuple$second = function (_v0) {
-	var y = _v0.b;
-	return y;
+var $author$project$Parsing$calculate = function (ls) {
+	if (!ls.b) {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var x = ls.a;
+		var xs = ls.b;
+		var val = A4(
+			$author$project$Parsing$calculateHelp,
+			10000000,
+			0,
+			0,
+			A2($elm$core$List$cons, x, xs));
+		return (val < 0) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(val);
+	}
 };
+var $elm$parser$Parser$Advanced$loopHelp = F4(
+	function (p, state, callback, s0) {
+		loopHelp:
+		while (true) {
+			var _v0 = callback(state);
+			var parse = _v0.a;
+			var _v1 = parse(s0);
+			if (_v1.$ === 'Good') {
+				var p1 = _v1.a;
+				var step = _v1.b;
+				var s1 = _v1.c;
+				if (step.$ === 'Loop') {
+					var newState = step.a;
+					var $temp$p = p || p1,
+						$temp$state = newState,
+						$temp$callback = callback,
+						$temp$s0 = s1;
+					p = $temp$p;
+					state = $temp$state;
+					callback = $temp$callback;
+					s0 = $temp$s0;
+					continue loopHelp;
+				} else {
+					var result = step.a;
+					return A3($elm$parser$Parser$Advanced$Good, p || p1, result, s1);
+				}
+			} else {
+				var p1 = _v1.a;
+				var x = _v1.b;
+				return A2($elm$parser$Parser$Advanced$Bad, p || p1, x);
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$loop = F2(
+	function (state, callback) {
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s) {
+				return A4($elm$parser$Parser$Advanced$loopHelp, false, state, callback, s);
+			});
+	});
+var $elm$parser$Parser$Advanced$Done = function (a) {
+	return {$: 'Done', a: a};
+};
+var $elm$parser$Parser$Advanced$Loop = function (a) {
+	return {$: 'Loop', a: a};
+};
+var $elm$parser$Parser$toAdvancedStep = function (step) {
+	if (step.$ === 'Loop') {
+		var s = step.a;
+		return $elm$parser$Parser$Advanced$Loop(s);
+	} else {
+		var a = step.a;
+		return $elm$parser$Parser$Advanced$Done(a);
+	}
+};
+var $elm$parser$Parser$loop = F2(
+	function (state, callback) {
+		return A2(
+			$elm$parser$Parser$Advanced$loop,
+			state,
+			function (s) {
+				return A2(
+					$elm$parser$Parser$map,
+					$elm$parser$Parser$toAdvancedStep,
+					callback(s));
+			});
+	});
+var $elm$parser$Parser$Done = function (a) {
+	return {$: 'Done', a: a};
+};
+var $elm$parser$Parser$Loop = function (a) {
+	return {$: 'Loop', a: a};
+};
+var $elm$core$Basics$append = _Utils_append;
 var $elm$core$List$foldl = F3(
 	function (func, acc, list) {
 		foldl:
@@ -3345,196 +3448,6 @@ var $elm$core$List$foldr = F3(
 	function (fn, acc, ls) {
 		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
 	});
-var $elm$core$List$unzip = function (pairs) {
-	var step = F2(
-		function (_v0, _v1) {
-			var x = _v0.a;
-			var y = _v0.b;
-			var xs = _v1.a;
-			var ys = _v1.b;
-			return _Utils_Tuple2(
-				A2($elm$core$List$cons, x, xs),
-				A2($elm$core$List$cons, y, ys));
-		});
-	return A3(
-		$elm$core$List$foldr,
-		step,
-		_Utils_Tuple2(_List_Nil, _List_Nil),
-		pairs);
-};
-var $author$project$Parsing$calculateHelp = F3(
-	function (prev, cur, rest) {
-		calculateHelp:
-		while (true) {
-			if (!rest.b) {
-				return prev + cur;
-			} else {
-				var x = rest.a;
-				var xs = rest.b;
-				if (!x) {
-					var $temp$prev = prev,
-						$temp$cur = 1,
-						$temp$rest = xs;
-					prev = $temp$prev;
-					cur = $temp$cur;
-					rest = $temp$rest;
-					continue calculateHelp;
-				} else {
-					if (A2(
-						$elm$core$List$member,
-						x,
-						$elm$core$List$unzip($author$project$Parsing$multipliers).b)) {
-						var $temp$prev = prev + ((cur * x) * (-1)),
-							$temp$cur = 0,
-							$temp$rest = xs;
-						prev = $temp$prev;
-						cur = $temp$cur;
-						rest = $temp$rest;
-						continue calculateHelp;
-					} else {
-						var $temp$prev = prev,
-							$temp$cur = cur + x,
-							$temp$rest = xs;
-						prev = $temp$prev;
-						cur = $temp$cur;
-						rest = $temp$rest;
-						continue calculateHelp;
-					}
-				}
-			}
-		}
-	});
-var $author$project$Parsing$calculate = function (ls) {
-	if (!ls.b) {
-		return $elm$core$Maybe$Nothing;
-	} else {
-		var x = ls.a;
-		var xs = ls.b;
-		return $elm$core$Maybe$Just(
-			A3(
-				$author$project$Parsing$calculateHelp,
-				0,
-				0,
-				A2($elm$core$List$cons, x, xs)));
-	}
-};
-var $elm$parser$Parser$Advanced$loopHelp = F4(
-	function (p, state, callback, s0) {
-		loopHelp:
-		while (true) {
-			var _v0 = callback(state);
-			var parse = _v0.a;
-			var _v1 = parse(s0);
-			if (_v1.$ === 'Good') {
-				var p1 = _v1.a;
-				var step = _v1.b;
-				var s1 = _v1.c;
-				if (step.$ === 'Loop') {
-					var newState = step.a;
-					var $temp$p = p || p1,
-						$temp$state = newState,
-						$temp$callback = callback,
-						$temp$s0 = s1;
-					p = $temp$p;
-					state = $temp$state;
-					callback = $temp$callback;
-					s0 = $temp$s0;
-					continue loopHelp;
-				} else {
-					var result = step.a;
-					return A3($elm$parser$Parser$Advanced$Good, p || p1, result, s1);
-				}
-			} else {
-				var p1 = _v1.a;
-				var x = _v1.b;
-				return A2($elm$parser$Parser$Advanced$Bad, p || p1, x);
-			}
-		}
-	});
-var $elm$parser$Parser$Advanced$loop = F2(
-	function (state, callback) {
-		return $elm$parser$Parser$Advanced$Parser(
-			function (s) {
-				return A4($elm$parser$Parser$Advanced$loopHelp, false, state, callback, s);
-			});
-	});
-var $elm$parser$Parser$Advanced$Done = function (a) {
-	return {$: 'Done', a: a};
-};
-var $elm$parser$Parser$Advanced$Loop = function (a) {
-	return {$: 'Loop', a: a};
-};
-var $elm$parser$Parser$toAdvancedStep = function (step) {
-	if (step.$ === 'Loop') {
-		var s = step.a;
-		return $elm$parser$Parser$Advanced$Loop(s);
-	} else {
-		var a = step.a;
-		return $elm$parser$Parser$Advanced$Done(a);
-	}
-};
-var $elm$parser$Parser$loop = F2(
-	function (state, callback) {
-		return A2(
-			$elm$parser$Parser$Advanced$loop,
-			state,
-			function (s) {
-				return A2(
-					$elm$parser$Parser$map,
-					$elm$parser$Parser$toAdvancedStep,
-					callback(s));
-			});
-	});
-var $elm$parser$Parser$Done = function (a) {
-	return {$: 'Done', a: a};
-};
-var $elm$parser$Parser$Loop = function (a) {
-	return {$: 'Loop', a: a};
-};
-var $elm$parser$Parser$Advanced$Append = F2(
-	function (a, b) {
-		return {$: 'Append', a: a, b: b};
-	});
-var $elm$parser$Parser$Advanced$oneOfHelp = F3(
-	function (s0, bag, parsers) {
-		oneOfHelp:
-		while (true) {
-			if (!parsers.b) {
-				return A2($elm$parser$Parser$Advanced$Bad, false, bag);
-			} else {
-				var parse = parsers.a.a;
-				var remainingParsers = parsers.b;
-				var _v1 = parse(s0);
-				if (_v1.$ === 'Good') {
-					var step = _v1;
-					return step;
-				} else {
-					var step = _v1;
-					var p = step.a;
-					var x = step.b;
-					if (p) {
-						return step;
-					} else {
-						var $temp$s0 = s0,
-							$temp$bag = A2($elm$parser$Parser$Advanced$Append, bag, x),
-							$temp$parsers = remainingParsers;
-						s0 = $temp$s0;
-						bag = $temp$bag;
-						parsers = $temp$parsers;
-						continue oneOfHelp;
-					}
-				}
-			}
-		}
-	});
-var $elm$parser$Parser$Advanced$oneOf = function (parsers) {
-	return $elm$parser$Parser$Advanced$Parser(
-		function (s) {
-			return A3($elm$parser$Parser$Advanced$oneOfHelp, s, $elm$parser$Parser$Advanced$Empty, parsers);
-		});
-};
-var $elm$parser$Parser$oneOf = $elm$parser$Parser$Advanced$oneOf;
-var $elm$core$Basics$append = _Utils_append;
 var $elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -3568,7 +3481,6 @@ var $elm$core$List$concatMap = F2(
 var $elm$parser$Parser$ExpectingKeyword = function (a) {
 	return {$: 'ExpectingKeyword', a: a};
 };
-var $elm$core$Basics$and = _Basics_and;
 var $elm$core$Basics$le = _Utils_le;
 var $elm$core$Char$toCode = _Char_toCode;
 var $elm$core$Char$isDigit = function (_char) {
@@ -3622,6 +3534,14 @@ var $elm$parser$Parser$keyword = function (kwd) {
 			kwd,
 			$elm$parser$Parser$ExpectingKeyword(kwd)));
 };
+var $author$project$Parsing$multipliers = _List_fromArray(
+	[
+		_Utils_Tuple2('and', -1),
+		_Utils_Tuple2('hundred', -100),
+		_Utils_Tuple2('thousand', -1000),
+		_Utils_Tuple2('half', -0.5),
+		_Utils_Tuple2('quarter', -0.25)
+	]);
 var $author$project$Parsing$ones = _List_fromArray(
 	[
 		_Utils_Tuple2('a', 0),
@@ -3759,6 +3679,49 @@ var $author$project$Parsing$allNums = A2(
 	_Utils_ap(
 		$author$project$Parsing$ones,
 		_Utils_ap($author$project$Parsing$tens, $author$project$Parsing$multipliers)));
+var $elm$parser$Parser$Advanced$Append = F2(
+	function (a, b) {
+		return {$: 'Append', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$oneOfHelp = F3(
+	function (s0, bag, parsers) {
+		oneOfHelp:
+		while (true) {
+			if (!parsers.b) {
+				return A2($elm$parser$Parser$Advanced$Bad, false, bag);
+			} else {
+				var parse = parsers.a.a;
+				var remainingParsers = parsers.b;
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Good') {
+					var step = _v1;
+					return step;
+				} else {
+					var step = _v1;
+					var p = step.a;
+					var x = step.b;
+					if (p) {
+						return step;
+					} else {
+						var $temp$s0 = s0,
+							$temp$bag = A2($elm$parser$Parser$Advanced$Append, bag, x),
+							$temp$parsers = remainingParsers;
+						s0 = $temp$s0;
+						bag = $temp$bag;
+						parsers = $temp$parsers;
+						continue oneOfHelp;
+					}
+				}
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$oneOf = function (parsers) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A3($elm$parser$Parser$Advanced$oneOfHelp, s, $elm$parser$Parser$Advanced$Empty, parsers);
+		});
+};
+var $elm$parser$Parser$oneOf = $elm$parser$Parser$Advanced$oneOf;
 var $elm$parser$Parser$Advanced$chompWhileHelp = F5(
 	function (isGood, offset, row, col, s0) {
 		chompWhileHelp:
@@ -3816,16 +3779,6 @@ var $elm$parser$Parser$Advanced$spaces = $elm$parser$Parser$Advanced$chompWhile(
 			_Utils_chr('\r')));
 	});
 var $elm$parser$Parser$spaces = $elm$parser$Parser$Advanced$spaces;
-var $author$project$Parsing$parseNumWord = A2(
-	$elm$parser$Parser$keeper,
-	A2(
-		$elm$parser$Parser$ignorer,
-		$elm$parser$Parser$succeed($elm$core$Basics$identity),
-		$elm$parser$Parser$spaces),
-	A2(
-		$elm$parser$Parser$ignorer,
-		$elm$parser$Parser$oneOf($author$project$Parsing$allNums),
-		$elm$parser$Parser$spaces));
 var $author$project$Parsing$numWordHelp = function (revNums) {
 	return $elm$parser$Parser$oneOf(
 		_List_fromArray(
@@ -3840,7 +3793,10 @@ var $author$project$Parsing$numWordHelp = function (revNums) {
 								A2($elm$core$List$cons, n, revNums));
 						}),
 					$elm$parser$Parser$spaces),
-				A2($elm$parser$Parser$ignorer, $author$project$Parsing$parseNumWord, $elm$parser$Parser$spaces)),
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$oneOf($author$project$Parsing$allNums),
+					$elm$parser$Parser$spaces)),
 				A2(
 				$elm$parser$Parser$map,
 				function (_v0) {
@@ -3950,6 +3906,36 @@ var $joshforisha$elm_inflect$Inflect$apply = F2(
 				return string;
 			}
 		}
+	});
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
 	});
 var $elm$regex$Regex$replace = _Regex_replaceAtMost(_Regex_infinity);
 var $joshforisha$elm_inflect$Inflect$replace = F2(
@@ -5044,11 +5030,10 @@ var $author$project$Example$numWord_1 = A2(
 	});
 var $author$project$Example$numWord_2 = A2(
 	$elm_explorations$test$Test$test,
-	'1005',
+	'100 1000',
 	function (_v0) {
-		var output = $elm$core$Result$Ok(
-			$elm$core$Maybe$Just(2005));
-		var input = 'two thousand and five';
+		var output = $elm$core$Result$Ok($elm$core$Maybe$Nothing);
+		var input = 'a hundred thousand';
 		return A2(
 			$elm_explorations$test$Expect$equal,
 			A2($elm$parser$Parser$run, $author$project$Parsing$numWord, input),
@@ -5877,7 +5862,6 @@ var $elm$core$Array$fromList = function (list) {
 	}
 };
 var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
-var $elm$core$Basics$ge = _Utils_ge;
 var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
 var $elm$core$Array$getHelp = F3(
 	function (shift, index, tree) {
@@ -6609,6 +6593,23 @@ var $author$project$Test$Reporter$Console$Format$Monochrome$fromHighlightable = 
 				return _Utils_Tuple2(_char, ' ');
 			}
 		});
+};
+var $elm$core$List$unzip = function (pairs) {
+	var step = F2(
+		function (_v0, _v1) {
+			var x = _v0.a;
+			var y = _v0.b;
+			var xs = _v1.a;
+			var ys = _v1.b;
+			return _Utils_Tuple2(
+				A2($elm$core$List$cons, x, xs),
+				A2($elm$core$List$cons, y, ys));
+		});
+	return A3(
+		$elm$core$List$foldr,
+		step,
+		_Utils_Tuple2(_List_Nil, _List_Nil),
+		pairs);
 };
 var $author$project$Test$Reporter$Console$Format$Monochrome$formatEquality = F2(
 	function (highlightedExpected, highlightedActual) {
@@ -7925,7 +7926,7 @@ var $author$project$Example$word = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Test$Generated$Main1376810570$main = A2(
+var $author$project$Test$Generated$Main3766514266$main = A2(
 	$author$project$Test$Runner$Node$run,
 	{
 		paths: _List_fromArray(
@@ -7933,7 +7934,7 @@ var $author$project$Test$Generated$Main1376810570$main = A2(
 		processes: 4,
 		report: $author$project$Test$Reporter$Reporter$ConsoleReport($author$project$Console$Text$UseColor),
 		runs: $elm$core$Maybe$Nothing,
-		seed: 38890859521189
+		seed: 19202034730906
 	},
 	$elm_explorations$test$Test$concat(
 		_List_fromArray(
@@ -7944,10 +7945,10 @@ var $author$project$Test$Generated$Main1376810570$main = A2(
 				_List_fromArray(
 					[$author$project$Example$bad_number_1, $author$project$Example$bad_number_2, $author$project$Example$floating, $author$project$Example$frac, $author$project$Example$full, $author$project$Example$no_number, $author$project$Example$no_space, $author$project$Example$no_trailing, $author$project$Example$no_unit, $author$project$Example$numWord_1, $author$project$Example$numWord_2, $author$project$Example$numWord_3, $author$project$Example$word]))
 			])));
-_Platform_export({'Test':{'Generated':{'Main1376810570':{'init':$author$project$Test$Generated$Main1376810570$main($elm$json$Json$Decode$int)(0)}}}});}(this));
+_Platform_export({'Test':{'Generated':{'Main3766514266':{'init':$author$project$Test$Generated$Main3766514266$main($elm$json$Json$Decode$int)(0)}}}});}(this));
 return this.Elm;
 })({});
-var pipeFilename = "\\\\.\\pipe\\elm_test-58148-1";
+var pipeFilename = "\\\\.\\pipe\\elm_test-277608-1";
 // Make sure necessary things are defined.
 if (typeof Elm === "undefined") {
   throw "test runner config error: Elm is not defined. Make sure you provide a file compiled by Elm!";

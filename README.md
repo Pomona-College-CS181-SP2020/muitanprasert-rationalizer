@@ -13,7 +13,9 @@ Implemented in Elm (tentative).
 
 ## Notes
 * Travis CI building with version 0.19.0
+* Limited support for number words
 * Next steps:
     * HTML tests
     * Test and debug number words
+    * Mixed fraction
     * Rearranging...
