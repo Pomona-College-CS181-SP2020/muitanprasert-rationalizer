@@ -5,8 +5,8 @@ Implemented in Elm (tentative).
 
 ## How It Works
 * Input a list of ingredients, each with quantity, as strings separated by new line
-* Show on the side as rearrangeable list
-* Double click to remove from the list
+* The list is rearrangeable by dragging the orange button.
+* Double click on X to remove from the list
 * Parse input strings in the amount, unit, and the rest (ingredient)
 * Determine if an input is scalable (by unit)
 * Input number of servings (floating points) and display in-place the scaled quantities with appropriate units
@@ -18,4 +18,3 @@ Implemented in Elm (tentative).
     * HTML tests
     * Test and debug number words
     * Mixed fraction
-    * Rearranging...

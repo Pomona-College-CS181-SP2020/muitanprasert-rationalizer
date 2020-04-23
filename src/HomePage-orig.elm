@@ -1,15 +1,17 @@
-module HomePage exposing (Model, Msg, initialModel, main, subscriptions, update, view)
+module HomePage-orig exposing (Model, Msg, initialModel, main, subscriptions, update, view)
 
+import Array exposing (..)
 import Browser
 import DnDList
 import Html exposing (Html, button, div, input, label,  span, text, textarea)
 import Html.Attributes exposing (attribute, class, for, href, id, max, min, name, placeholder, step, type_, value)
 import Html.Events exposing (..)
-import Array
-
-import Round
 import Inflect exposing (pluralize, singularize)
 import Parsing exposing (Ingredient, asIngredient)
+import Round
+import String
+
+
 
 -- MAIN
 
@@ -18,53 +20,37 @@ main : Program () Model Msg
 main =
     Browser.element
         { init = init
-        , view = view
         , update = update
+        , view = view
         , subscriptions = subscriptions
         }
 
 
 
--- DATA
+-- MODEL
 
 
-type alias Ingredient = 
-    { q : Maybe Float
-    , unit : Maybe String
-    , rest : String }
+type alias Model =
+    { content : List Ingredient
+    , temp : String
+    , scale : Float
+    , warningText : String
+    , dnd : DnDList.Model
+    }
 
 
-data : List Ingredient
-data =
-    [ { q = Just 2500, unit = Just "cups", rest = "whole milk" }
-    , { q = Nothing, unit = Nothing, rest = "something" } ]
+initialModel : Model
+initialModel =
+    { content = [ { q = Just 2500, unit = Just "cups", rest = "whole milk" } ]
+    , temp = ""
+    , scale = 1.0
+    , warningText = ""
+    , dnd = system.model
+    }
 
-
-stringizeItem : Ingredient -> String
-stringizeItem { q, unit, rest } =
-    case ( q, unit ) of
-        ( Nothing, Nothing ) ->
-            "Some " ++ rest
-
-        ( Nothing, Just u ) ->
-            "~" ++ u ++ " " ++ rest
-
-        ( Just a, Nothing ) ->
-            let
-                v =
-                    Round.ceiling 0 (a / 1000)
-
-                real =
-                    String.fromFloat (twoDecimal (a / 1000))
-            in
-            if v == "1" || rest == "" then
-                v ++ " " ++ singularize rest ++ " (use " ++ real ++ ")"
-
-            else
-                v ++ " " ++ pluralize rest ++ " (use " ++ real ++ ")"
-
-        ( Just a, Just u ) ->
-            String.fromFloat (twoDecimal (a / 1000)) ++ " " ++ u ++ " " ++ rest
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( initialModel, Cmd.none )
 
 
 
@@ -86,34 +72,6 @@ system =
 
 
 
--- MODEL
-
-
-type alias Model =
-    { dnd : DnDList.Model
-    , items : List Ingredient
-    , temp : String
-    , scale : Float
-    , warningText : String
-    }
-
-
-initialModel : Model
-initialModel =
-    { dnd = system.model
-    , items = data
-    , temp = ""
-    , scale = 1.0
-    , warningText = ""
-    }
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( initialModel, Cmd.none )
-
-
-
 -- SUBSCRIPTIONS
 
 
@@ -127,30 +85,18 @@ subscriptions model =
 
 
 type Msg
-    = MyMsg DnDList.Msg
-    | Delete Int
-    | Submit
+    = Submit
     | UpdateContent String
+    | Clear
+    | Delete Int
     | Scale String
     | ShowWarning (List Ingredient)
-    | Clear
+    | MyMsg DnDList.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update message model =
-    case message of
-        MyMsg msg ->
-            let
-                ( dnd, items ) =
-                    system.update msg model.dnd model.items
-            in
-            ( { model | dnd = dnd, items = items }
-            , system.commands dnd
-            )
-            
-        Delete i ->
-            ( { model | items = deleteAt i model.items }, Cmd.none )
-        
+update action model =
+    case action of
         UpdateContent s ->
             ( { model | temp = s }, Cmd.none )
 
@@ -163,12 +109,15 @@ update message model =
                     update (ShowWarning items) model
 
                 m2 =
-                    { m1 | items = List.append m1.items items }
+                    { m1 | content = List.append m1.content items }
             in
             update Clear m2
 
         Clear ->
             ( { model | temp = "" }, Cmd.none )
+
+        Delete i ->
+            ( { model | content = deleteAt i model.content }, Cmd.none )
 
         Scale v ->
             let
@@ -180,13 +129,22 @@ update message model =
             in
             ( { model
                 | scale = newScale
-                , items = scaleContent (newScale / origScale) model.items
+                , content = scaleContent (newScale / origScale) model.content
               }
             , Cmd.none
             )
 
         ShowWarning items ->
             ( { model | warningText = illegalInput items }, Cmd.none )
+
+        MyMsg msg ->
+            let
+                ( dnd, items ) =
+                    system.update msg model.dnd model.content
+            in
+            ( { model | dnd = dnd, content = items }
+            , system.commands dnd
+            )
 
 
 deleteAt : Int -> List a -> List a
@@ -199,7 +157,7 @@ deleteAt i l =
             Array.slice 0 i array
 
         back =
-            Array.slice (i + 1) (Array.length array) array
+            Array.slice (i + 1) (length array) array
     in
     Array.toList (Array.append front back)
 
@@ -263,6 +221,40 @@ ingredientize =
         )
 
 
+stringize : List Ingredient -> List String
+stringize l =
+    List.filter (\s -> not (String.isEmpty s))
+        (List.map stringizeItem l)
+
+
+stringizeItem : Ingredient -> String
+stringizeItem { q, unit, rest } =
+    case ( q, unit ) of
+        ( Nothing, Nothing ) ->
+            "Some " ++ rest
+
+        ( Nothing, Just u ) ->
+            "~" ++ u ++ " " ++ rest
+
+        ( Just a, Nothing ) ->
+            let
+                v =
+                    Round.ceiling 0 (a / 1000)
+
+                real =
+                    String.fromFloat (twoDecimal (a / 1000))
+            in
+            if v == "1" || rest == "" then
+                v ++ " " ++ singularize rest ++ " (use " ++ real ++ ")"
+
+            else
+                v ++ " " ++ pluralize rest ++ " (use " ++ real ++ ")"
+
+        ( Just a, Just u ) ->
+            String.fromFloat (twoDecimal (a / 1000)) ++ " " ++ u ++ " " ++ rest
+
+
+
 -- VIEW
 
 
@@ -289,9 +281,7 @@ view model =
                         []
                     ]
                 , div [ class "container-contact100-form-btn" ]
-                    [ button [ class "contact100-form-btn"
-                             , onClick Submit
-                             ]
+                    [ button [ class "contact100-form-btn", onClick Submit ]
                         [ text "Add ingredient list to recipe" ]
                     ]
                 , div [ attribute "style" "width:500px;height:100px;" ]
@@ -317,47 +307,39 @@ view model =
                     ]
                 ]
             , div [ class "contact100-more flex-col-c-m", attribute "style" "background-image: url('images/bg-02.jpg');" ]
-                [ div
+                [ div 
                     [ attribute "style" "width:65%; height:80%; background-color: white; opacity: 0.8; padding: 2em; overflow:auto;" ]
-                    [ model.items
-                        |> List.indexedMap (itemView model.dnd)
+                    [ model.content
+                        |> List.indexedMap (viewButton model.dnd)
                         |> div []
-                    , ghostView model.dnd model.items
+                    , ghostView model.dnd model.content
                     ]
                 ]
             ]
         ]
 
 
-itemView : DnDList.Model -> Int -> Ingredient -> Html Msg
-itemView dnd index item =
+viewButton : DnDList.Model -> Int -> Ingredient -> Html Msg
+viewButton dnd index ingr =
     let
-        itemId : String
+        item = stringizeItem ingr
         itemId =
-            "id-" ++ stringizeItem item
+            "id-" ++ item
     in
     case system.info dnd of
         Just { dragIndex } ->
             if dragIndex /= index then
-                div
+                div 
                     (Html.Attributes.id itemId :: system.dropEvents index itemId)
-                    [ button (handleStyles orange) []
-                    , text (stringizeItem item)
-                    ]
+                    [ text (item ++ " being dragged") ]
 
             else
-                div
-                    [ Html.Attributes.id itemId ]
-                    [ button (handleStyles "dimgrey") []
-                    , text "-------------" ]
+                div [ Html.Attributes.id itemId ] [ text "------------" ]
 
         Nothing ->
-            div
-                [ Html.Attributes.id itemId ]
-                [ button (handleStyles orange ++ system.dragEvents index itemId) []
-                , text (stringizeItem item ++ " ")
-                , button [ attribute "style" "position: absolute; right: 11em; color: red", onDoubleClick (Delete index) ] [ text "X" ]
-                ]
+            div 
+                (Html.Attributes.id itemId :: system.dropEvents index itemId)
+                [ button [ onDoubleClick (Delete index) ] [ text (item ++ " still") ] ]
 
 
 ghostView : DnDList.Model -> List Ingredient -> Html Msg
@@ -368,27 +350,10 @@ ghostView dnd items =
             system.info dnd
                 |> Maybe.andThen (\{ dragIndex } -> items |> List.drop dragIndex |> List.head)
     in
-    case maybeDragItem of
-        Just item ->
-            div
-                (system.ghostStyles dnd)
-                [ button (handleStyles orange) []
-                , text (stringizeItem item) ]
+        case maybeDragItem of
+            Just item ->
+                div (system.ghostStyles dnd)
+                    [ text ( stringizeItem item ++ " ghost") ]
 
-        Nothing ->
-            text ""
-
-
--- STYLE
-
-orange = "#dc9a39"
-
-handleStyles : String -> List (Html.Attribute msg)
-handleStyles color =
-    [ Html.Attributes.style "width" "12px"
-    , Html.Attributes.style "height" "12px"
-    , Html.Attributes.style "background-color" color
-    , Html.Attributes.style "border-radius" "3px"
-    , Html.Attributes.style "margin" "5px"
-    , Html.Attributes.style "cursor" "pointer"
-    ]
+            Nothing ->
+                text ""

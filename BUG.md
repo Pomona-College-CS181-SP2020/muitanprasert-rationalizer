@@ -13,6 +13,10 @@ Problem: If quantity is illegal number, "sometimes" parser wouldn't read the res
 
 
 # BUG 2020-04-21 #3
-Problem: DnDList examples only work with elm-ui's Elements, but using Element totally messes up the interaction with the interface.
+Problem: DnDList messes up the rest of interface.
 
-2020-04-21: Currently reverted to original viewButton. Will try to go through itemView and then ghostView to remove all Elements.
+2020-04-21: DnDList examples only work with elm-ui's Elements, but using Element totally messes up the interaction with the interface. Currently reverted to original viewButton. Will try to go through itemView and then ghostView to remove all Elements.
+
+2020-04-22: Converted UI Elements to Html elements. The interface is working again, but rearranging still doesn't work. 
+
+2020-04-23: Rewrote the code from scratch, copying small chunks over; it solved the problem.
