@@ -1,7 +1,7 @@
 language:
   - elm
   - node_js
-node_js: "10"
+node_js: "12"
 
 install:
   - npm install -g elm@0.19.1
