@@ -1,4 +1,4 @@
-module HomePage exposing (Model, Msg, initialModel, main, subscriptions, update, view)
+module HomePage exposing (..)
 
 import Browser
 import DnDList

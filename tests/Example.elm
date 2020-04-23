@@ -3,7 +3,7 @@ module Example exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
-import Parsing exposing (Ingredient, asIngredient, numWord)
+import Parsing exposing (asIngredient, numWord)
 import Parser exposing (..)
 
 
@@ -21,7 +21,7 @@ numWord_2 =
     test "100 1000" <| \_ ->
         let
             input = "a hundred thousand"
-            output = Ok (Nothing)
+            output = Ok Nothing
         in
             Expect.equal (run numWord input) output
 

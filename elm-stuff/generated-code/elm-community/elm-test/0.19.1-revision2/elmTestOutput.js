@@ -7926,7 +7926,7 @@ var $author$project$Example$word = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Test$Generated$Main3766514266$main = A2(
+var $author$project$Test$Generated$Main3097159114$main = A2(
 	$author$project$Test$Runner$Node$run,
 	{
 		paths: _List_fromArray(
@@ -7934,7 +7934,7 @@ var $author$project$Test$Generated$Main3766514266$main = A2(
 		processes: 4,
 		report: $author$project$Test$Reporter$Reporter$ConsoleReport($author$project$Console$Text$UseColor),
 		runs: $elm$core$Maybe$Nothing,
-		seed: 19202034730906
+		seed: 52000017429737
 	},
 	$elm_explorations$test$Test$concat(
 		_List_fromArray(
@@ -7945,10 +7945,10 @@ var $author$project$Test$Generated$Main3766514266$main = A2(
 				_List_fromArray(
 					[$author$project$Example$bad_number_1, $author$project$Example$bad_number_2, $author$project$Example$floating, $author$project$Example$frac, $author$project$Example$full, $author$project$Example$no_number, $author$project$Example$no_space, $author$project$Example$no_trailing, $author$project$Example$no_unit, $author$project$Example$numWord_1, $author$project$Example$numWord_2, $author$project$Example$numWord_3, $author$project$Example$word]))
 			])));
-_Platform_export({'Test':{'Generated':{'Main3766514266':{'init':$author$project$Test$Generated$Main3766514266$main($elm$json$Json$Decode$int)(0)}}}});}(this));
+_Platform_export({'Test':{'Generated':{'Main3097159114':{'init':$author$project$Test$Generated$Main3097159114$main($elm$json$Json$Decode$int)(0)}}}});}(this));
 return this.Elm;
 })({});
-var pipeFilename = "\\\\.\\pipe\\elm_test-277608-1";
+var pipeFilename = "\\\\.\\pipe\\elm_test-5256-1";
 // Make sure necessary things are defined.
 if (typeof Elm === "undefined") {
   throw "test runner config error: Elm is not defined. Make sure you provide a file compiled by Elm!";
