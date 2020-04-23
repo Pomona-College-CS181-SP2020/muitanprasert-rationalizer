@@ -5412,8 +5412,15 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$HomePage$data = _List_fromArray(
+	[
+		{
+		q: $elm$core$Maybe$Just(2500),
+		rest: 'whole milk',
+		unit: $elm$core$Maybe$Just('cups')
+	},
+		{q: $elm$core$Maybe$Nothing, rest: 'something', unit: $elm$core$Maybe$Nothing}
+	]);
 var $author$project$HomePage$MyMsg = function (a) {
 	return {$: 'MyMsg', a: a};
 };
@@ -5432,6 +5439,7 @@ var $author$project$HomePage$config = {
 var $annaghi$dnd_list$DnDList$Model = function (a) {
 	return {$: 'Model', a: a};
 };
+var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $annaghi$dnd_list$DnDList$GotDragElement = function (a) {
 	return {$: 'GotDragElement', a: a};
 };
@@ -5460,6 +5468,7 @@ var $elm$core$Task$attempt = F2(
 						task))));
 	});
 var $elm$browser$Browser$Dom$getElement = _Browser_getElement;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $annaghi$dnd_list$DnDList$dragElementCommands = F2(
 	function (stepMsg, state) {
 		var _v0 = state.dragElement;
@@ -6633,23 +6642,9 @@ var $annaghi$dnd_list$DnDList$create = F2(
 		};
 	});
 var $author$project$HomePage$system = A2($annaghi$dnd_list$DnDList$create, $author$project$HomePage$config, $author$project$HomePage$MyMsg);
+var $author$project$HomePage$initialModel = {dnd: $author$project$HomePage$system.model, items: $author$project$HomePage$data, scale: 1.0, temp: '', warningText: ''};
 var $author$project$HomePage$init = function (_v0) {
-	return _Utils_Tuple2(
-		{
-			content: _List_fromArray(
-				[
-					{
-					q: $elm$core$Maybe$Just(2500),
-					rest: 'whole milk',
-					unit: $elm$core$Maybe$Just('cups')
-				}
-				]),
-			dnd: $author$project$HomePage$system.model,
-			scale: 1.0,
-			temp: '',
-			warningText: ''
-		},
-		$elm$core$Platform$Cmd$none);
+	return _Utils_Tuple2($author$project$HomePage$initialModel, $elm$core$Platform$Cmd$none);
 };
 var $author$project$HomePage$subscriptions = function (model) {
 	return $author$project$HomePage$system.subscriptions(model.dnd);
@@ -8342,12 +8337,31 @@ var $author$project$HomePage$scaleContent = function (scale) {
 		});
 };
 var $author$project$HomePage$update = F2(
-	function (action, model) {
+	function (message, model) {
 		update:
 		while (true) {
-			switch (action.$) {
+			switch (message.$) {
+				case 'MyMsg':
+					var msg = message.a;
+					var _v1 = A3($author$project$HomePage$system.update, msg, model.dnd, model.items);
+					var dnd = _v1.a;
+					var items = _v1.b;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{dnd: dnd, items: items}),
+						$author$project$HomePage$system.commands(dnd));
+				case 'Delete':
+					var i = message.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								items: A2($author$project$HomePage$deleteAt, i, model.items)
+							}),
+						$elm$core$Platform$Cmd$none);
 				case 'UpdateContent':
-					var s = action.a;
+					var s = message.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8356,19 +8370,19 @@ var $author$project$HomePage$update = F2(
 				case 'Submit':
 					var items = $author$project$HomePage$ingredientize(
 						A2($elm$core$String$split, '\n', model.temp));
-					var _v1 = A2(
+					var _v2 = A2(
 						$author$project$HomePage$update,
 						$author$project$HomePage$ShowWarning(items),
 						model);
-					var m1 = _v1.a;
+					var m1 = _v2.a;
 					var m2 = _Utils_update(
 						m1,
 						{
-							content: A2($elm$core$List$append, m1.content, items)
+							items: A2($elm$core$List$append, m1.items, items)
 						});
-					var $temp$action = $author$project$HomePage$Clear,
+					var $temp$message = $author$project$HomePage$Clear,
 						$temp$model = m2;
-					action = $temp$action;
+					message = $temp$message;
 					model = $temp$model;
 					continue update;
 				case 'Clear':
@@ -8377,17 +8391,8 @@ var $author$project$HomePage$update = F2(
 							model,
 							{temp: ''}),
 						$elm$core$Platform$Cmd$none);
-				case 'Delete':
-					var i = action.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: A2($author$project$HomePage$deleteAt, i, model.content)
-							}),
-						$elm$core$Platform$Cmd$none);
 				case 'Scale':
-					var v = action.a;
+					var v = message.a;
 					var origScale = model.scale;
 					var newScale = A2(
 						$elm$core$Maybe$withDefault,
@@ -8397,12 +8402,12 @@ var $author$project$HomePage$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2($author$project$HomePage$scaleContent, newScale / origScale, model.content),
+								items: A2($author$project$HomePage$scaleContent, newScale / origScale, model.items),
 								scale: newScale
 							}),
 						$elm$core$Platform$Cmd$none);
-				case 'ShowWarning':
-					var items = action.a;
+				default:
+					var items = message.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
@@ -8410,16 +8415,6 @@ var $author$project$HomePage$update = F2(
 								warningText: $author$project$HomePage$illegalInput(items)
 							}),
 						$elm$core$Platform$Cmd$none);
-				default:
-					var msg = action.a;
-					var _v2 = A3($author$project$HomePage$system.update, msg, model.dnd, model.content);
-					var dnd = _v2.a;
-					var items = _v2.b;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{content: items, dnd: dnd}),
-						$author$project$HomePage$system.commands(dnd));
 			}
 		}
 	});
@@ -8451,66 +8446,27 @@ var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$Attributes$for = $elm$html$Html$Attributes$stringProperty('htmlFor');
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
-var $elm$html$Html$input = _VirtualDom_node('input');
-var $elm$html$Html$label = _VirtualDom_node('label');
-var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
-var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
-var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
-var $elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
+var $author$project$HomePage$handleStyles = function (color) {
+	return _List_fromArray(
+		[
+			A2($elm$html$Html$Attributes$style, 'width', '12px'),
+			A2($elm$html$Html$Attributes$style, 'height', '12px'),
+			A2($elm$html$Html$Attributes$style, 'background-color', color),
+			A2($elm$html$Html$Attributes$style, 'border-radius', '3px'),
+			A2($elm$html$Html$Attributes$style, 'margin', '5px'),
+			A2($elm$html$Html$Attributes$style, 'cursor', 'pointer')
+		]);
 };
-var $elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
 };
-var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var $elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var $elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
-	});
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $elm$html$Html$Events$targetValue = A2(
-	$elm$json$Json$Decode$at,
-	_List_fromArray(
-		['target', 'value']),
-	$elm$json$Json$Decode$string);
-var $elm$html$Html$Events$onInput = function (tagger) {
-	return A2(
-		$elm$html$Html$Events$stopPropagationOn,
-		'input',
-		A2(
-			$elm$json$Json$Decode$map,
-			$elm$html$Html$Events$alwaysStop,
-			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
-};
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $elm$html$Html$Attributes$step = function (n) {
-	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
-};
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
+var $author$project$HomePage$orange = '#dc9a39';
 var $elm$core$Basics$abs = function (n) {
 	return (n < 0) ? (-n) : n;
 };
@@ -8808,19 +8764,38 @@ var $author$project$HomePage$stringizeItem = function (_v0) {
 		}
 	}
 };
-var $author$project$HomePage$stringize = function (l) {
-	return A2(
-		$elm$core$List$filter,
-		function (s) {
-			return !$elm$core$String$isEmpty(s);
-		},
-		A2($elm$core$List$map, $author$project$HomePage$stringizeItem, l));
-};
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $elm$html$Html$textarea = _VirtualDom_node('textarea');
-var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$HomePage$ghostView = F2(
+	function (dnd, items) {
+		var maybeDragItem = A2(
+			$elm$core$Maybe$andThen,
+			function (_v1) {
+				var dragIndex = _v1.dragIndex;
+				return $elm$core$List$head(
+					A2($elm$core$List$drop, dragIndex, items));
+			},
+			$author$project$HomePage$system.info(dnd));
+		if (maybeDragItem.$ === 'Just') {
+			var item = maybeDragItem.a;
+			return A2(
+				$elm$html$Html$div,
+				$author$project$HomePage$system.ghostStyles(dnd),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						$author$project$HomePage$handleStyles($author$project$HomePage$orange),
+						_List_Nil),
+						$elm$html$Html$text(
+						$author$project$HomePage$stringizeItem(item))
+					]));
+		} else {
+			return $elm$html$Html$text('');
+		}
+	});
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$input = _VirtualDom_node('input');
 var $author$project$HomePage$Delete = function (a) {
 	return {$: 'Delete', a: a};
 };
@@ -8830,26 +8805,122 @@ var $elm$html$Html$Events$onDoubleClick = function (msg) {
 		'dblclick',
 		$elm$json$Json$Decode$succeed(msg));
 };
-var $author$project$HomePage$viewButton = F2(
-	function (i, val) {
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$button,
-					_List_fromArray(
-						[
-							$elm$html$Html$Events$onDoubleClick(
-							$author$project$HomePage$Delete(i))
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(val)
-						]))
-				]));
+var $author$project$HomePage$itemView = F3(
+	function (dnd, index, item) {
+		var itemId = 'id-' + $author$project$HomePage$stringizeItem(item);
+		var _v0 = $author$project$HomePage$system.info(dnd);
+		if (_v0.$ === 'Just') {
+			var dragIndex = _v0.a.dragIndex;
+			return (!_Utils_eq(dragIndex, index)) ? A2(
+				$elm$html$Html$div,
+				A2(
+					$elm$core$List$cons,
+					$elm$html$Html$Attributes$id(itemId),
+					A2($author$project$HomePage$system.dropEvents, index, itemId)),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						$author$project$HomePage$handleStyles($author$project$HomePage$orange),
+						_List_Nil),
+						$elm$html$Html$text(
+						$author$project$HomePage$stringizeItem(item))
+					])) : A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$id(itemId)
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						$author$project$HomePage$handleStyles('dimgrey'),
+						_List_Nil),
+						$elm$html$Html$text('-------------')
+					]));
+		} else {
+			return A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$id(itemId)
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_Utils_ap(
+							$author$project$HomePage$handleStyles($author$project$HomePage$orange),
+							A2($author$project$HomePage$system.dragEvents, index, itemId)),
+						_List_Nil),
+						$elm$html$Html$text(
+						$author$project$HomePage$stringizeItem(item) + ' '),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$attribute, 'style', 'position: absolute; right: 11em; color: red'),
+								$elm$html$Html$Events$onDoubleClick(
+								$author$project$HomePage$Delete(index))
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('X')
+							]))
+					]));
+		}
 	});
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
+var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
+var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var $elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
+	});
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $elm$html$Html$Events$targetValue = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	$elm$json$Json$Decode$string);
+var $elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		$elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			$elm$json$Json$Decode$map,
+			$elm$html$Html$Events$alwaysStop,
+			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$html$Html$Attributes$step = function (n) {
+	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
+};
+var $elm$html$Html$textarea = _VirtualDom_node('textarea');
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$HomePage$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -8883,7 +8954,7 @@ var $author$project$HomePage$view = function (model) {
 									]),
 								_List_fromArray(
 									[
-										$elm$html$Html$text('Recipe Rationalizer				')
+										$elm$html$Html$text('Recipe Rationalizer\t\t\t\t')
 									])),
 								A2(
 								$elm$html$Html$div,
@@ -9037,8 +9108,9 @@ var $author$project$HomePage$view = function (model) {
 										_List_Nil,
 										A2(
 											$elm$core$List$indexedMap,
-											$author$project$HomePage$viewButton,
-											$author$project$HomePage$stringize(model.content)))
+											$author$project$HomePage$itemView(model.dnd),
+											model.items)),
+										A2($author$project$HomePage$ghostView, model.dnd, model.items)
 									]))
 							]))
 					]))
