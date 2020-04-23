@@ -34,12 +34,6 @@ type alias Ingredient =
     , rest : String }
 
 
-data : List Ingredient
-data =
-    [ { q = Just 2500, unit = Just "cups", rest = "whole milk" }
-    , { q = Nothing, unit = Nothing, rest = "something" } ]
-
-
 stringizeItem : Ingredient -> String
 stringizeItem { q, unit, rest } =
     case ( q, unit ) of
@@ -101,7 +95,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { dnd = system.model
-    , items = data
+    , items = []
     , temp = ""
     , scale = 1.0
     , warningText = ""
