@@ -18,10 +18,10 @@ numWord_1 =
 
 numWord_2 : Test
 numWord_2 = 
-    test "1005" <| \_ ->
+    test "100 1000" <| \_ ->
         let
-            input = "two thousand and five"
-            output = Ok (Just 2005)
+            input = "a hundred thousand"
+            output = Ok (Nothing)
         in
             Expect.equal (run numWord input) output
 

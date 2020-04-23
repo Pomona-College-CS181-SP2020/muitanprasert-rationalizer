@@ -121,7 +121,7 @@ allNums = List.concatMap (
                 [ map (\_ -> num) (keyword word)
                 , map (\_ -> num) (keyword (pascalize word))
                 ]
-              ) ( ones
+              ) ( ones 
                   ++ tens
                   ++ multipliers )
 
@@ -136,35 +136,40 @@ calculate : List Float -> Maybe Float
 calculate ls =
   case ls of
     [] -> Nothing
-    (x::xs) -> Just (calculateHelp 0 0 (x::xs))
+    (x::xs) -> 
+      let
+        val = calculateHelp 10000000 0 0 (x::xs)
+      in
+        if val < 0
+        then Nothing
+        else Just val
 
-calculateHelp : Float -> Float -> List Float -> Float
-calculateHelp prev cur rest =
+calculateHelp : Float -> Float -> Float -> List Float -> Float
+calculateHelp bound prev cur rest =
     case rest of
       [] -> prev + cur
       (x::xs) ->
           if x == 0
-          then calculateHelp prev 1 xs
+          then calculateHelp bound prev 1 xs
           else
-              if List.member x (Tuple.second (List.unzip multipliers))
-              then calculateHelp (prev+cur*x*(-1)) 0 xs
-              else calculateHelp prev (cur+x) xs
-
+              if x < 0
+              then
+                let
+                  chunk = cur*x*(-1)
+                in
+                  if chunk >= bound || (chunk == 0 && x < -1) --catch composite unit (e.g. hundred thousand)
+                  then -10000000
+                  else calculateHelp (min bound chunk) (prev+chunk) 0 xs
+              else calculateHelp bound prev (cur+x) xs
+      
 
 numWordHelp : List Float -> Parser (Step (List Float) (List Float))
 numWordHelp revNums =
   oneOf
     [ succeed (\n -> Loop (n :: revNums))
         |. spaces
-        |= parseNumWord
+        |= oneOf allNums
         |. spaces
     , succeed ()
         |> map (\_ -> Done (List.reverse revNums))
     ]
-
-parseNumWord : Parser Float
-parseNumWord =
-    succeed identity
-      |. spaces
-      |= oneOf allNums
-      |. spaces
