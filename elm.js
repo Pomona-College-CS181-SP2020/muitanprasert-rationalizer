@@ -5412,15 +5412,6 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$HomePage$data = _List_fromArray(
-	[
-		{
-		q: $elm$core$Maybe$Just(2500),
-		rest: 'whole milk',
-		unit: $elm$core$Maybe$Just('cups')
-	},
-		{q: $elm$core$Maybe$Nothing, rest: 'something', unit: $elm$core$Maybe$Nothing}
-	]);
 var $author$project$HomePage$MyMsg = function (a) {
 	return {$: 'MyMsg', a: a};
 };
@@ -6642,7 +6633,7 @@ var $annaghi$dnd_list$DnDList$create = F2(
 		};
 	});
 var $author$project$HomePage$system = A2($annaghi$dnd_list$DnDList$create, $author$project$HomePage$config, $author$project$HomePage$MyMsg);
-var $author$project$HomePage$initialModel = {dnd: $author$project$HomePage$system.model, items: $author$project$HomePage$data, scale: 1.0, temp: '', warningText: ''};
+var $author$project$HomePage$initialModel = {dnd: $author$project$HomePage$system.model, items: _List_Nil, scale: 1.0, temp: '', warningText: ''};
 var $author$project$HomePage$init = function (_v0) {
 	return _Utils_Tuple2($author$project$HomePage$initialModel, $elm$core$Platform$Cmd$none);
 };
