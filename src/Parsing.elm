@@ -46,7 +46,13 @@ units = List.concatMap (
           \b -> [keyword (pluralize b), keyword b]
           ) bases
 
-type alias Frac = { num : Int, deno : Int }
+type alias Frac =
+  { num : Int
+  , deno : Int }
+
+type alias MixedFrac =
+  { num : Int
+  , frac : Float }
 
 fraction : Parser Float
 fraction =
@@ -59,7 +65,16 @@ fraction =
 parseQuantity : Parser (Maybe Float)
 parseQuantity =
     oneOf
-        [ backtrackable ( succeed Just
+        [ backtrackable ( 
+            Parser.map (\{num, frac} -> Just (toFloat num+frac))
+             <| succeed MixedFrac
+              |. spaces
+              |= int
+              |. symbol " "
+              |= fraction
+              |. symbol " " --requires a space after quantity
+              |. spaces )
+        , backtrackable ( succeed Just
             |. spaces
             |= float
             |. symbol " " --requires a space after quantity

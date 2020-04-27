@@ -3,6 +3,10 @@ Problem: Can't get Travis CI to build the very simple version
 
 2020-04-01: npm install -g elm@1.19.1 fails. 1.19.0 version currently works.
 
+2020-04-24: DnDList requires elm 0.19.1. Travis CI breaks again.
+
+2020-04-27: Found a solution on GitHub issues. The version should be latest-0.19.1.
+
 
 # BUG 2020-04-12 #2
 Problem: If quantity is illegal number, "sometimes" parser wouldn't read the rest at all.

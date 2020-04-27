@@ -7,14 +7,11 @@ Implemented in Elm (tentative).
 * Input a list of ingredients, each with quantity, as strings separated by new line
 * The list is rearrangeable by dragging the orange button.
 * Double click on X to remove from the list
-* Parse input strings in the amount, unit, and the rest (ingredient)
-* Determine if an input is scalable (by unit)
+* Parse input strings in the amount, unit, and the rest, assuming that order
+* Ingredients without a quantity is unscalable. Ingredients without a unit is only scalable to integers.
 * Input number of servings (floating points) and display in-place the scaled quantities with appropriate units
 
 ## Notes
 * Travis CI building with version 0.19.0
-* Limited support for number words
-* Next steps:
-    * HTML tests
-    * Test and debug number words
-    * Mixed fraction
+* Supported format for quantity: integer, float, fraction, mixed fraction, number words (limited)
+* Next steps: add more tests

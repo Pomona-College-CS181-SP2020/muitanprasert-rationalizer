@@ -7152,6 +7152,10 @@ var $elm$parser$Parser$Advanced$keeper = F2(
 		return A3($elm$parser$Parser$Advanced$map2, $elm$core$Basics$apL, parseFunc, parseArg);
 	});
 var $elm$parser$Parser$keeper = $elm$parser$Parser$Advanced$keeper;
+var $author$project$Parsing$MixedFrac = F2(
+	function (num, frac) {
+		return {frac: frac, num: num};
+	});
 var $elm$parser$Parser$Advanced$backtrackable = function (_v0) {
 	var parse = _v0.a;
 	return $elm$parser$Parser$Advanced$Parser(
@@ -7909,6 +7913,33 @@ var $author$project$Parsing$numWord = function () {
 var $author$project$Parsing$parseQuantity = $elm$parser$Parser$oneOf(
 	_List_fromArray(
 		[
+			$elm$parser$Parser$backtrackable(
+			A2(
+				$elm$parser$Parser$map,
+				function (_v0) {
+					var num = _v0.num;
+					var frac = _v0.frac;
+					return $elm$core$Maybe$Just(num + frac);
+				},
+				A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$succeed($author$project$Parsing$MixedFrac),
+							$elm$parser$Parser$spaces),
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$int,
+							$elm$parser$Parser$symbol(' '))),
+					A2(
+						$elm$parser$Parser$ignorer,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$author$project$Parsing$fraction,
+							$elm$parser$Parser$symbol(' ')),
+						$elm$parser$Parser$spaces)))),
 			$elm$parser$Parser$backtrackable(
 			A2(
 				$elm$parser$Parser$keeper,

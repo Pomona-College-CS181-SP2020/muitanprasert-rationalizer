@@ -70,6 +70,15 @@ frac =
         in
             Expect.equal (asIngredient input) output
 
+mixedfrac : Test
+mixedfrac =
+    test "fraction" <| \_ ->
+        let
+            input = "1 1/2 cups  whole milk"
+            output = {q=Just 1.5, unit=Just "cups", rest="whole milk"}
+        in
+            Expect.equal (asIngredient input) output
+
 word : Test
 word =
     test "word" <| \_ ->
