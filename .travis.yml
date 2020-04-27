@@ -1,12 +1,9 @@
-language:
-  - elm
-  - node_js
-node_js: "12"
+language: elm
 
-install:
-  - npm install -g elm@0.19.1
-  - npm install -g elm-test@0.19.1-revision2
-  - npm install -g elm-format@0.8.3
+elm: latest-0.19.1
+node_js: "12"
+elm_test: 0.19.1
+elm_format: 0.8.2
 
 before_script:
   - elm-format src/ --yes
