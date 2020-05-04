@@ -8764,11 +8764,11 @@ var $author$project$HomePage$stringizeItem = function (_v0) {
 		if (_v1.b.$ === 'Nothing') {
 			var _v2 = _v1.a;
 			var _v3 = _v1.b;
-			return 'Some ' + rest;
+			return $elm$core$String$isEmpty(rest) ? '-' : ('Some ' + rest);
 		} else {
 			var _v4 = _v1.a;
 			var u = _v1.b.a;
-			return '~' + (u + (' ' + rest));
+			return '~ ' + (u + (' ' + rest));
 		}
 	} else {
 		if (_v1.b.$ === 'Nothing') {
@@ -8777,7 +8777,8 @@ var $author$project$HomePage$stringizeItem = function (_v0) {
 			var v = A2($myrho$elm_round$Round$ceiling, 0, a / 1000);
 			var real = $elm$core$String$fromFloat(
 				$author$project$HomePage$twoDecimal(a / 1000));
-			return ((v === '1') || (rest === '')) ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + (' (use ' + (real + ')'))))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + (' (use ' + (real + ')')))));
+			var exact = _Utils_eq(v, real) ? '' : (' (exact quantity: ' + (real + ')'));
+			return ((v === '1') || (rest === '')) ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + exact))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + exact)));
 		} else {
 			var a = _v1.a.a;
 			var u = _v1.b.a;
