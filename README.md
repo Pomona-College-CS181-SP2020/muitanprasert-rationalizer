@@ -1,7 +1,9 @@
 # RecipeRationalizer
+[![Build Status](https://travis-ci.com/Pomona-College-CS181-SP2020/muitanprasert-rationalizer.svg?branch=master)](https://travis-ci.com/Pomona-College-CS181-SP2020/muitanprasert-rationalizer)
+
 
 An interactive application for scaling recipes. Anyone can input the ingredient list for a recipe and scale it up or down.
-Implemented in Elm (tentative).
+Implemented in Elm.
 
 ## How It Works
 * Input a list of ingredients, each with quantity, as strings separated by new line
