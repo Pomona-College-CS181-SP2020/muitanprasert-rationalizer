@@ -1,4 +1,4 @@
-module Example exposing (..)
+module ParserTest exposing (..)
 
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
@@ -9,7 +9,7 @@ import Parser exposing (..)
 
 numWord_1 : Test
 numWord_1 = 
-    test "1.5" <| \_ ->
+    test "word 1.5" <| \_ ->
         let
             input = "one and a half"
             output = Ok (Just 1.5)
@@ -18,7 +18,7 @@ numWord_1 =
 
 numWord_2 : Test
 numWord_2 = 
-    test "100 1000" <| \_ ->
+    test "word 100 1000" <| \_ ->
         let
             input = "a hundred thousand"
             output = Ok Nothing
@@ -27,7 +27,7 @@ numWord_2 =
 
 numWord_3 : Test
 numWord_3 = 
-    test "122" <| \_ ->
+    test "word 122" <| \_ ->
         let
             input = "a hundred and twenty two"
             output = Ok (Just 122)
@@ -72,7 +72,7 @@ frac =
 
 mixedfrac : Test
 mixedfrac =
-    test "fraction" <| \_ ->
+    test "mixed fraction" <| \_ ->
         let
             input = "1 1/2 cups  whole milk"
             output = {q=Just 1.5, unit=Just "cups", rest="whole milk"}
@@ -115,7 +115,7 @@ no_space =
         in
             Expect.equal (asIngredient input) output
 
-no_trailing : Test --Should we allow this? Doesn't seem like it could be valid recipe.
+no_trailing : Test
 no_trailing =
     test "no trailing" <| \_ ->
         let

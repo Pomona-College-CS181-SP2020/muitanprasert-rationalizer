@@ -1500,6 +1500,43 @@ var _Regex_infinity = Infinity;
 
 
 
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
+
+
+
 /**/
 function _Json_errorToString(error)
 {
@@ -1929,43 +1966,6 @@ function _Json_addEntry(func)
 }
 
 var _Json_encodeNull = _Json_wrap(null);
-
-
-
-var _Bitwise_and = F2(function(a, b)
-{
-	return a & b;
-});
-
-var _Bitwise_or = F2(function(a, b)
-{
-	return a | b;
-});
-
-var _Bitwise_xor = F2(function(a, b)
-{
-	return a ^ b;
-});
-
-function _Bitwise_complement(a)
-{
-	return ~a;
-};
-
-var _Bitwise_shiftLeftBy = F2(function(offset, a)
-{
-	return a << offset;
-});
-
-var _Bitwise_shiftRightBy = F2(function(offset, a)
-{
-	return a >> offset;
-});
-
-var _Bitwise_shiftRightZfBy = F2(function(offset, a)
-{
-	return a >>> offset;
-});
 
 
 
@@ -2902,6 +2902,11 @@ var $elm$parser$Parser$keeper = $elm$parser$Parser$Advanced$keeper;
 var $elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
+var $author$project$Parsing$MixedFrac = F2(
+	function (num, frac) {
+		return {frac: frac, num: num};
+	});
+var $elm$core$Basics$add = _Basics_add;
 var $elm$core$Basics$False = {$: 'False'};
 var $elm$parser$Parser$Advanced$backtrackable = function (_v0) {
 	var parse = _v0.a;
@@ -2926,7 +2931,6 @@ var $elm$core$Result$Err = function (a) {
 var $elm$core$Result$Ok = function (a) {
 	return {$: 'Ok', a: a};
 };
-var $elm$core$Basics$add = _Basics_add;
 var $elm$parser$Parser$Advanced$consumeBase = _Parser_consumeBase;
 var $elm$parser$Parser$Advanced$consumeBase16 = _Parser_consumeBase16;
 var $elm$core$Basics$True = {$: 'True'};
@@ -3815,6 +3819,33 @@ var $author$project$Parsing$parseQuantity = $elm$parser$Parser$oneOf(
 		[
 			$elm$parser$Parser$backtrackable(
 			A2(
+				$elm$parser$Parser$map,
+				function (_v0) {
+					var num = _v0.num;
+					var frac = _v0.frac;
+					return $elm$core$Maybe$Just(num + frac);
+				},
+				A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$succeed($author$project$Parsing$MixedFrac),
+							$elm$parser$Parser$spaces),
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$int,
+							$elm$parser$Parser$symbol(' '))),
+					A2(
+						$elm$parser$Parser$ignorer,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$author$project$Parsing$fraction,
+							$elm$parser$Parser$symbol(' ')),
+						$elm$parser$Parser$spaces)))),
+			$elm$parser$Parser$backtrackable(
+			A2(
 				$elm$parser$Parser$keeper,
 				A2(
 					$elm$parser$Parser$ignorer,
@@ -4287,7 +4318,7 @@ var $elm_explorations$test$Test$test = F2(
 						]);
 				}));
 	});
-var $author$project$Example$bad_number_1 = A2(
+var $author$project$ParserTest$bad_number_1 = A2(
 	$elm_explorations$test$Test$test,
 	'more than 1 decimal point: remove',
 	function (_v0) {
@@ -4298,7 +4329,7 @@ var $author$project$Example$bad_number_1 = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Example$bad_number_2 = A2(
+var $author$project$ParserTest$bad_number_2 = A2(
 	$elm_explorations$test$Test$test,
 	'more than 1 slash: remove',
 	function (_v0) {
@@ -4562,6 +4593,529 @@ var $elm_explorations$test$Test$concat = function (tests) {
 		}
 	}
 };
+var $elm$core$Array$Leaf = function (a) {
+	return {$: 'Leaf', a: a};
+};
+var $elm$core$Elm$JsArray$appendN = _JsArray_appendN;
+var $elm$core$Array$branchFactor = 32;
+var $elm$core$Elm$JsArray$empty = _JsArray_empty;
+var $elm$core$Elm$JsArray$length = _JsArray_length;
+var $elm$core$Elm$JsArray$slice = _JsArray_slice;
+var $elm$core$Array$appendHelpBuilder = F2(
+	function (tail, builder) {
+		var tailLen = $elm$core$Elm$JsArray$length(tail);
+		var notAppended = ($elm$core$Array$branchFactor - $elm$core$Elm$JsArray$length(builder.tail)) - tailLen;
+		var appended = A3($elm$core$Elm$JsArray$appendN, $elm$core$Array$branchFactor, builder.tail, tail);
+		return (notAppended < 0) ? {
+			nodeList: A2(
+				$elm$core$List$cons,
+				$elm$core$Array$Leaf(appended),
+				builder.nodeList),
+			nodeListSize: builder.nodeListSize + 1,
+			tail: A3($elm$core$Elm$JsArray$slice, notAppended, tailLen, tail)
+		} : ((!notAppended) ? {
+			nodeList: A2(
+				$elm$core$List$cons,
+				$elm$core$Array$Leaf(appended),
+				builder.nodeList),
+			nodeListSize: builder.nodeListSize + 1,
+			tail: $elm$core$Elm$JsArray$empty
+		} : {nodeList: builder.nodeList, nodeListSize: builder.nodeListSize, tail: appended});
+	});
+var $elm$core$Array$Array_elm_builtin = F4(
+	function (a, b, c, d) {
+		return {$: 'Array_elm_builtin', a: a, b: b, c: c, d: d};
+	});
+var $elm$core$Array$SubTree = function (a) {
+	return {$: 'SubTree', a: a};
+};
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var $elm$core$Basics$ceiling = _Basics_ceiling;
+var $elm$core$Basics$logBase = F2(
+	function (base, number) {
+		return _Basics_log(number) / _Basics_log(base);
+	});
+var $elm$core$Array$shiftStep = $elm$core$Basics$ceiling(
+	A2($elm$core$Basics$logBase, 2, $elm$core$Array$branchFactor));
+var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
+var $elm$core$Elm$JsArray$push = _JsArray_push;
+var $elm$core$Elm$JsArray$singleton = _JsArray_singleton;
+var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
+var $elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
+var $elm$core$Array$insertTailInTree = F4(
+	function (shift, index, tail, tree) {
+		var pos = $elm$core$Array$bitMask & (index >>> shift);
+		if (_Utils_cmp(
+			pos,
+			$elm$core$Elm$JsArray$length(tree)) > -1) {
+			if (shift === 5) {
+				return A2(
+					$elm$core$Elm$JsArray$push,
+					$elm$core$Array$Leaf(tail),
+					tree);
+			} else {
+				var newSub = $elm$core$Array$SubTree(
+					A4($elm$core$Array$insertTailInTree, shift - $elm$core$Array$shiftStep, index, tail, $elm$core$Elm$JsArray$empty));
+				return A2($elm$core$Elm$JsArray$push, newSub, tree);
+			}
+		} else {
+			var value = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (value.$ === 'SubTree') {
+				var subTree = value.a;
+				var newSub = $elm$core$Array$SubTree(
+					A4($elm$core$Array$insertTailInTree, shift - $elm$core$Array$shiftStep, index, tail, subTree));
+				return A3($elm$core$Elm$JsArray$unsafeSet, pos, newSub, tree);
+			} else {
+				var newSub = $elm$core$Array$SubTree(
+					A4(
+						$elm$core$Array$insertTailInTree,
+						shift - $elm$core$Array$shiftStep,
+						index,
+						tail,
+						$elm$core$Elm$JsArray$singleton(value)));
+				return A3($elm$core$Elm$JsArray$unsafeSet, pos, newSub, tree);
+			}
+		}
+	});
+var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var $elm$core$Array$unsafeReplaceTail = F2(
+	function (newTail, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var originalTailLen = $elm$core$Elm$JsArray$length(tail);
+		var newTailLen = $elm$core$Elm$JsArray$length(newTail);
+		var newArrayLen = len + (newTailLen - originalTailLen);
+		if (_Utils_eq(newTailLen, $elm$core$Array$branchFactor)) {
+			var overflow = _Utils_cmp(newArrayLen >>> $elm$core$Array$shiftStep, 1 << startShift) > 0;
+			if (overflow) {
+				var newShift = startShift + $elm$core$Array$shiftStep;
+				var newTree = A4(
+					$elm$core$Array$insertTailInTree,
+					newShift,
+					len,
+					newTail,
+					$elm$core$Elm$JsArray$singleton(
+						$elm$core$Array$SubTree(tree)));
+				return A4($elm$core$Array$Array_elm_builtin, newArrayLen, newShift, newTree, $elm$core$Elm$JsArray$empty);
+			} else {
+				return A4(
+					$elm$core$Array$Array_elm_builtin,
+					newArrayLen,
+					startShift,
+					A4($elm$core$Array$insertTailInTree, startShift, len, newTail, tree),
+					$elm$core$Elm$JsArray$empty);
+			}
+		} else {
+			return A4($elm$core$Array$Array_elm_builtin, newArrayLen, startShift, tree, newTail);
+		}
+	});
+var $elm$core$Array$appendHelpTree = F2(
+	function (toAppend, array) {
+		var len = array.a;
+		var tree = array.c;
+		var tail = array.d;
+		var itemsToAppend = $elm$core$Elm$JsArray$length(toAppend);
+		var notAppended = ($elm$core$Array$branchFactor - $elm$core$Elm$JsArray$length(tail)) - itemsToAppend;
+		var appended = A3($elm$core$Elm$JsArray$appendN, $elm$core$Array$branchFactor, tail, toAppend);
+		var newArray = A2($elm$core$Array$unsafeReplaceTail, appended, array);
+		if (notAppended < 0) {
+			var nextTail = A3($elm$core$Elm$JsArray$slice, notAppended, itemsToAppend, toAppend);
+			return A2($elm$core$Array$unsafeReplaceTail, nextTail, newArray);
+		} else {
+			return newArray;
+		}
+	});
+var $elm$core$Elm$JsArray$foldl = _JsArray_foldl;
+var $elm$core$Basics$idiv = _Basics_idiv;
+var $elm$core$Array$builderFromArray = function (_v0) {
+	var len = _v0.a;
+	var tree = _v0.c;
+	var tail = _v0.d;
+	var helper = F2(
+		function (node, acc) {
+			if (node.$ === 'SubTree') {
+				var subTree = node.a;
+				return A3($elm$core$Elm$JsArray$foldl, helper, acc, subTree);
+			} else {
+				return A2($elm$core$List$cons, node, acc);
+			}
+		});
+	return {
+		nodeList: A3($elm$core$Elm$JsArray$foldl, helper, _List_Nil, tree),
+		nodeListSize: (len / $elm$core$Array$branchFactor) | 0,
+		tail: tail
+	};
+};
+var $elm$core$Basics$floor = _Basics_floor;
+var $elm$core$Basics$max = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) > 0) ? x : y;
+	});
+var $elm$core$Elm$JsArray$initializeFromList = _JsArray_initializeFromList;
+var $elm$core$Array$compressNodes = F2(
+	function (nodes, acc) {
+		compressNodes:
+		while (true) {
+			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodes);
+			var node = _v0.a;
+			var remainingNodes = _v0.b;
+			var newAcc = A2(
+				$elm$core$List$cons,
+				$elm$core$Array$SubTree(node),
+				acc);
+			if (!remainingNodes.b) {
+				return $elm$core$List$reverse(newAcc);
+			} else {
+				var $temp$nodes = remainingNodes,
+					$temp$acc = newAcc;
+				nodes = $temp$nodes;
+				acc = $temp$acc;
+				continue compressNodes;
+			}
+		}
+	});
+var $elm$core$Array$treeFromBuilder = F2(
+	function (nodeList, nodeListSize) {
+		treeFromBuilder:
+		while (true) {
+			var newNodeSize = $elm$core$Basics$ceiling(nodeListSize / $elm$core$Array$branchFactor);
+			if (newNodeSize === 1) {
+				return A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodeList).a;
+			} else {
+				var $temp$nodeList = A2($elm$core$Array$compressNodes, nodeList, _List_Nil),
+					$temp$nodeListSize = newNodeSize;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue treeFromBuilder;
+			}
+		}
+	});
+var $elm$core$Array$builderToArray = F2(
+	function (reverseNodeList, builder) {
+		if (!builder.nodeListSize) {
+			return A4(
+				$elm$core$Array$Array_elm_builtin,
+				$elm$core$Elm$JsArray$length(builder.tail),
+				$elm$core$Array$shiftStep,
+				$elm$core$Elm$JsArray$empty,
+				builder.tail);
+		} else {
+			var treeLen = builder.nodeListSize * $elm$core$Array$branchFactor;
+			var depth = $elm$core$Basics$floor(
+				A2($elm$core$Basics$logBase, $elm$core$Array$branchFactor, treeLen - 1));
+			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.nodeList) : builder.nodeList;
+			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.nodeListSize);
+			return A4(
+				$elm$core$Array$Array_elm_builtin,
+				$elm$core$Elm$JsArray$length(builder.tail) + treeLen,
+				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
+				tree,
+				builder.tail);
+		}
+	});
+var $elm$core$Array$append = F2(
+	function (a, _v0) {
+		var aTail = a.d;
+		var bLen = _v0.a;
+		var bTree = _v0.c;
+		var bTail = _v0.d;
+		if (_Utils_cmp(bLen, $elm$core$Array$branchFactor * 4) < 1) {
+			var foldHelper = F2(
+				function (node, array) {
+					if (node.$ === 'SubTree') {
+						var tree = node.a;
+						return A3($elm$core$Elm$JsArray$foldl, foldHelper, array, tree);
+					} else {
+						var leaf = node.a;
+						return A2($elm$core$Array$appendHelpTree, leaf, array);
+					}
+				});
+			return A2(
+				$elm$core$Array$appendHelpTree,
+				bTail,
+				A3($elm$core$Elm$JsArray$foldl, foldHelper, a, bTree));
+		} else {
+			var foldHelper = F2(
+				function (node, builder) {
+					if (node.$ === 'SubTree') {
+						var tree = node.a;
+						return A3($elm$core$Elm$JsArray$foldl, foldHelper, builder, tree);
+					} else {
+						var leaf = node.a;
+						return A2($elm$core$Array$appendHelpBuilder, leaf, builder);
+					}
+				});
+			return A2(
+				$elm$core$Array$builderToArray,
+				true,
+				A2(
+					$elm$core$Array$appendHelpBuilder,
+					bTail,
+					A3(
+						$elm$core$Elm$JsArray$foldl,
+						foldHelper,
+						$elm$core$Array$builderFromArray(a),
+						bTree)));
+		}
+	});
+var $elm$core$Array$empty = A4($elm$core$Array$Array_elm_builtin, 0, $elm$core$Array$shiftStep, $elm$core$Elm$JsArray$empty, $elm$core$Elm$JsArray$empty);
+var $elm$core$Array$fromListHelp = F3(
+	function (list, nodeList, nodeListSize) {
+		fromListHelp:
+		while (true) {
+			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, list);
+			var jsArray = _v0.a;
+			var remainingItems = _v0.b;
+			if (_Utils_cmp(
+				$elm$core$Elm$JsArray$length(jsArray),
+				$elm$core$Array$branchFactor) < 0) {
+				return A2(
+					$elm$core$Array$builderToArray,
+					true,
+					{nodeList: nodeList, nodeListSize: nodeListSize, tail: jsArray});
+			} else {
+				var $temp$list = remainingItems,
+					$temp$nodeList = A2(
+					$elm$core$List$cons,
+					$elm$core$Array$Leaf(jsArray),
+					nodeList),
+					$temp$nodeListSize = nodeListSize + 1;
+				list = $temp$list;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue fromListHelp;
+			}
+		}
+	});
+var $elm$core$Array$fromList = function (list) {
+	if (!list.b) {
+		return $elm$core$Array$empty;
+	} else {
+		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
+	}
+};
+var $elm$core$Array$length = function (_v0) {
+	var len = _v0.a;
+	return len;
+};
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
+		}
+	});
+var $elm$core$Array$tailIndex = function (len) {
+	return (len >>> 5) << 5;
+};
+var $elm$core$Array$sliceLeft = F2(
+	function (from, array) {
+		var len = array.a;
+		var tree = array.c;
+		var tail = array.d;
+		if (!from) {
+			return array;
+		} else {
+			if (_Utils_cmp(
+				from,
+				$elm$core$Array$tailIndex(len)) > -1) {
+				return A4(
+					$elm$core$Array$Array_elm_builtin,
+					len - from,
+					$elm$core$Array$shiftStep,
+					$elm$core$Elm$JsArray$empty,
+					A3(
+						$elm$core$Elm$JsArray$slice,
+						from - $elm$core$Array$tailIndex(len),
+						$elm$core$Elm$JsArray$length(tail),
+						tail));
+			} else {
+				var skipNodes = (from / $elm$core$Array$branchFactor) | 0;
+				var helper = F2(
+					function (node, acc) {
+						if (node.$ === 'SubTree') {
+							var subTree = node.a;
+							return A3($elm$core$Elm$JsArray$foldr, helper, acc, subTree);
+						} else {
+							var leaf = node.a;
+							return A2($elm$core$List$cons, leaf, acc);
+						}
+					});
+				var leafNodes = A3(
+					$elm$core$Elm$JsArray$foldr,
+					helper,
+					_List_fromArray(
+						[tail]),
+					tree);
+				var nodesToInsert = A2($elm$core$List$drop, skipNodes, leafNodes);
+				if (!nodesToInsert.b) {
+					return $elm$core$Array$empty;
+				} else {
+					var head = nodesToInsert.a;
+					var rest = nodesToInsert.b;
+					var firstSlice = from - (skipNodes * $elm$core$Array$branchFactor);
+					var initialBuilder = {
+						nodeList: _List_Nil,
+						nodeListSize: 0,
+						tail: A3(
+							$elm$core$Elm$JsArray$slice,
+							firstSlice,
+							$elm$core$Elm$JsArray$length(head),
+							head)
+					};
+					return A2(
+						$elm$core$Array$builderToArray,
+						true,
+						A3($elm$core$List$foldl, $elm$core$Array$appendHelpBuilder, initialBuilder, rest));
+				}
+			}
+		}
+	});
+var $elm$core$Array$fetchNewTail = F4(
+	function (shift, end, treeEnd, tree) {
+		fetchNewTail:
+		while (true) {
+			var pos = $elm$core$Array$bitMask & (treeEnd >>> shift);
+			var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (_v0.$ === 'SubTree') {
+				var sub = _v0.a;
+				var $temp$shift = shift - $elm$core$Array$shiftStep,
+					$temp$end = end,
+					$temp$treeEnd = treeEnd,
+					$temp$tree = sub;
+				shift = $temp$shift;
+				end = $temp$end;
+				treeEnd = $temp$treeEnd;
+				tree = $temp$tree;
+				continue fetchNewTail;
+			} else {
+				var values = _v0.a;
+				return A3($elm$core$Elm$JsArray$slice, 0, $elm$core$Array$bitMask & end, values);
+			}
+		}
+	});
+var $elm$core$Array$hoistTree = F3(
+	function (oldShift, newShift, tree) {
+		hoistTree:
+		while (true) {
+			if ((_Utils_cmp(oldShift, newShift) < 1) || (!$elm$core$Elm$JsArray$length(tree))) {
+				return tree;
+			} else {
+				var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, 0, tree);
+				if (_v0.$ === 'SubTree') {
+					var sub = _v0.a;
+					var $temp$oldShift = oldShift - $elm$core$Array$shiftStep,
+						$temp$newShift = newShift,
+						$temp$tree = sub;
+					oldShift = $temp$oldShift;
+					newShift = $temp$newShift;
+					tree = $temp$tree;
+					continue hoistTree;
+				} else {
+					return tree;
+				}
+			}
+		}
+	});
+var $elm$core$Array$sliceTree = F3(
+	function (shift, endIdx, tree) {
+		var lastPos = $elm$core$Array$bitMask & (endIdx >>> shift);
+		var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, lastPos, tree);
+		if (_v0.$ === 'SubTree') {
+			var sub = _v0.a;
+			var newSub = A3($elm$core$Array$sliceTree, shift - $elm$core$Array$shiftStep, endIdx, sub);
+			return (!$elm$core$Elm$JsArray$length(newSub)) ? A3($elm$core$Elm$JsArray$slice, 0, lastPos, tree) : A3(
+				$elm$core$Elm$JsArray$unsafeSet,
+				lastPos,
+				$elm$core$Array$SubTree(newSub),
+				A3($elm$core$Elm$JsArray$slice, 0, lastPos + 1, tree));
+		} else {
+			return A3($elm$core$Elm$JsArray$slice, 0, lastPos, tree);
+		}
+	});
+var $elm$core$Array$sliceRight = F2(
+	function (end, array) {
+		var len = array.a;
+		var startShift = array.b;
+		var tree = array.c;
+		var tail = array.d;
+		if (_Utils_eq(end, len)) {
+			return array;
+		} else {
+			if (_Utils_cmp(
+				end,
+				$elm$core$Array$tailIndex(len)) > -1) {
+				return A4(
+					$elm$core$Array$Array_elm_builtin,
+					end,
+					startShift,
+					tree,
+					A3($elm$core$Elm$JsArray$slice, 0, $elm$core$Array$bitMask & end, tail));
+			} else {
+				var endIdx = $elm$core$Array$tailIndex(end);
+				var depth = $elm$core$Basics$floor(
+					A2(
+						$elm$core$Basics$logBase,
+						$elm$core$Array$branchFactor,
+						A2($elm$core$Basics$max, 1, endIdx - 1)));
+				var newShift = A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep);
+				return A4(
+					$elm$core$Array$Array_elm_builtin,
+					end,
+					newShift,
+					A3(
+						$elm$core$Array$hoistTree,
+						startShift,
+						newShift,
+						A3($elm$core$Array$sliceTree, startShift, endIdx, tree)),
+					A4($elm$core$Array$fetchNewTail, startShift, end, endIdx, tree));
+			}
+		}
+	});
+var $elm$core$Array$translateIndex = F2(
+	function (index, _v0) {
+		var len = _v0.a;
+		var posIndex = (index < 0) ? (len + index) : index;
+		return (posIndex < 0) ? 0 : ((_Utils_cmp(posIndex, len) > 0) ? len : posIndex);
+	});
+var $elm$core$Array$slice = F3(
+	function (from, to, array) {
+		var correctTo = A2($elm$core$Array$translateIndex, to, array);
+		var correctFrom = A2($elm$core$Array$translateIndex, from, array);
+		return (_Utils_cmp(correctFrom, correctTo) > 0) ? $elm$core$Array$empty : A2(
+			$elm$core$Array$sliceLeft,
+			correctFrom,
+			A2($elm$core$Array$sliceRight, correctTo, array));
+	});
+var $author$project$HomePage$deleteAt = F2(
+	function (i, l) {
+		var array = $elm$core$Array$fromList(l);
+		var back = A3(
+			$elm$core$Array$slice,
+			i + 1,
+			$elm$core$Array$length(array),
+			array);
+		var front = A3($elm$core$Array$slice, 0, i, array);
+		return $elm$core$Array$toList(
+			A2($elm$core$Array$append, front, back));
+	});
 var $elm_explorations$test$Test$describe = F2(
 	function (untrimmedDesc, tests) {
 		var desc = $elm$core$String$trim(untrimmedDesc);
@@ -4601,80 +5155,581 @@ var $elm_explorations$test$Test$describe = F2(
 			}
 		}
 	});
-var $author$project$Example$floating = A2(
-	$elm_explorations$test$Test$test,
-	'floating',
-	function (_v0) {
-		var output = {
-			q: $elm$core$Maybe$Just(2.5),
-			rest: 'whole milk',
-			unit: $elm$core$Maybe$Just('cups')
-		};
-		var input = '2.5 cups  whole milk';
-		return A2(
-			$elm_explorations$test$Expect$equal,
-			$author$project$Parsing$asIngredient(input),
-			output);
-	});
-var $author$project$Example$frac = A2(
-	$elm_explorations$test$Test$test,
-	'fraction',
-	function (_v0) {
-		var output = {
-			q: $elm$core$Maybe$Just(0.4),
-			rest: 'whole milk',
-			unit: $elm$core$Maybe$Just('cups')
-		};
-		var input = ' 2/5 cups  whole milk';
-		return A2(
-			$elm_explorations$test$Expect$equal,
-			$author$project$Parsing$asIngredient(input),
-			output);
-	});
-var $author$project$Example$full = A2(
-	$elm_explorations$test$Test$test,
-	'full',
-	function (_v0) {
-		var output = {
-			q: $elm$core$Maybe$Just(10),
-			rest: 'of butter',
-			unit: $elm$core$Maybe$Just('tbsp.')
-		};
-		var input = '10 tbsp. of butter';
-		return A2(
-			$elm_explorations$test$Expect$equal,
-			$author$project$Parsing$asIngredient(input),
-			output);
-	});
-var $elm$json$Json$Decode$Failure = F2(
-	function (a, b) {
-		return {$: 'Failure', a: a, b: b};
-	});
-var $elm$json$Json$Decode$Field = F2(
-	function (a, b) {
-		return {$: 'Field', a: a, b: b};
-	});
-var $elm$json$Json$Decode$Index = F2(
-	function (a, b) {
-		return {$: 'Index', a: a, b: b};
-	});
-var $elm$json$Json$Decode$OneOf = function (a) {
-	return {$: 'OneOf', a: a};
+var $elm_explorations$test$Test$Runner$Failure$InvalidFuzzer = {$: 'InvalidFuzzer'};
+var $elm_explorations$test$Test$Internal$FuzzTest = function (a) {
+	return {$: 'FuzzTest', a: a};
 };
-var $elm$core$String$all = _String_all;
-var $elm$json$Json$Encode$encode = _Json_encode;
+var $elm_explorations$test$Test$Expectation$withGiven = F2(
+	function (newGiven, expectation) {
+		if (expectation.$ === 'Fail') {
+			var failure = expectation.a;
+			return $elm_explorations$test$Test$Expectation$Fail(
+				_Utils_update(
+					failure,
+					{
+						given: $elm$core$Maybe$Just(newGiven)
+					}));
+		} else {
+			return expectation;
+		}
+	});
+var $elm_explorations$test$Test$Fuzz$formatExpectation = function (_v0) {
+	var given = _v0.a;
+	var expectation = _v0.b;
+	return A2($elm_explorations$test$Test$Expectation$withGiven, given, expectation);
+};
+var $elm_explorations$test$RoseTree$Rose = F2(
+	function (a, b) {
+		return {$: 'Rose', a: a, b: b};
+	});
+var $elm_explorations$test$Lazy$force = function (piece) {
+	if (piece.$ === 'Evaluated') {
+		var a = piece.a;
+		return a;
+	} else {
+		var thunk = piece.a;
+		return thunk(_Utils_Tuple0);
+	}
+};
+var $elm_explorations$test$Lazy$List$headAndTail = function (list) {
+	var _v0 = $elm_explorations$test$Lazy$force(list);
+	if (_v0.$ === 'Nil') {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var first = _v0.a;
+		var rest = _v0.b;
+		return $elm$core$Maybe$Just(
+			_Utils_Tuple2(first, rest));
+	}
+};
+var $elm_explorations$test$Test$Fuzz$shrinkAndAdd = F4(
+	function (rootTree, getExpectation, rootsExpectation, failures) {
+		var shrink = F2(
+			function (oldExpectation, _v0) {
+				shrink:
+				while (true) {
+					var failingValue = _v0.a;
+					var branches = _v0.b;
+					var _v1 = $elm_explorations$test$Lazy$List$headAndTail(branches);
+					if (_v1.$ === 'Just') {
+						var _v2 = _v1.a;
+						var rosetree = _v2.a;
+						var possiblyFailingValue = rosetree.a;
+						var moreLazyRoseTrees = _v2.b;
+						var _v3 = getExpectation(possiblyFailingValue);
+						if (_v3.$ === 'Pass') {
+							var $temp$oldExpectation = oldExpectation,
+								$temp$_v0 = A2($elm_explorations$test$RoseTree$Rose, failingValue, moreLazyRoseTrees);
+							oldExpectation = $temp$oldExpectation;
+							_v0 = $temp$_v0;
+							continue shrink;
+						} else {
+							var newExpectation = _v3;
+							var _v4 = A2(shrink, newExpectation, rosetree);
+							var minimalValue = _v4.a;
+							var finalExpectation = _v4.b;
+							return _Utils_Tuple2(minimalValue, finalExpectation);
+						}
+					} else {
+						return _Utils_Tuple2(failingValue, oldExpectation);
+					}
+				}
+			});
+		var _v5 = A2(shrink, rootsExpectation, rootTree);
+		var rootMinimalValue = _v5.a;
+		var rootFinalExpectation = _v5.b;
+		return A3(
+			$elm$core$Dict$insert,
+			$elm_explorations$test$Test$Internal$toString(rootMinimalValue),
+			rootFinalExpectation,
+			failures);
+	});
+var $elm$random$Random$step = F2(
+	function (_v0, seed) {
+		var generator = _v0.a;
+		return generator(seed);
+	});
+var $elm_explorations$test$Test$Fuzz$findNewFailure = F5(
+	function (fuzzer, getExpectation, failures, currentSeed, value) {
+		var _v0 = getExpectation(value);
+		if (_v0.$ === 'Pass') {
+			return failures;
+		} else {
+			var failedExpectation = _v0;
+			var _v1 = A2($elm$random$Random$step, fuzzer, currentSeed);
+			var rosetree = _v1.a;
+			var nextSeed = _v1.b;
+			return A4($elm_explorations$test$Test$Fuzz$shrinkAndAdd, rosetree, getExpectation, failedExpectation, failures);
+		}
+	});
+var $elm$random$Random$Generator = function (a) {
+	return {$: 'Generator', a: a};
+};
+var $elm$random$Random$map = F2(
+	function (func, _v0) {
+		var genA = _v0.a;
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var _v1 = genA(seed0);
+				var a = _v1.a;
+				var seed1 = _v1.b;
+				return _Utils_Tuple2(
+					func(a),
+					seed1);
+			});
+	});
+var $elm_explorations$test$RoseTree$root = function (_v0) {
+	var a = _v0.a;
+	return a;
+};
+var $elm_explorations$test$Test$Fuzz$getFailures = F4(
+	function (fuzzer, getExpectation, initialSeed, totalRuns) {
+		var initialFailures = $elm$core$Dict$empty;
+		var genVal = A2($elm$random$Random$map, $elm_explorations$test$RoseTree$root, fuzzer);
+		var helper = F3(
+			function (currentSeed, remainingRuns, failures) {
+				helper:
+				while (true) {
+					var _v0 = A2($elm$random$Random$step, genVal, currentSeed);
+					var value = _v0.a;
+					var nextSeed = _v0.b;
+					var newFailures = A5($elm_explorations$test$Test$Fuzz$findNewFailure, fuzzer, getExpectation, failures, currentSeed, value);
+					if (remainingRuns <= 1) {
+						return newFailures;
+					} else {
+						var $temp$currentSeed = nextSeed,
+							$temp$remainingRuns = remainingRuns - 1,
+							$temp$failures = newFailures;
+						currentSeed = $temp$currentSeed;
+						remainingRuns = $temp$remainingRuns;
+						failures = $temp$failures;
+						continue helper;
+					}
+				}
+			});
+		return A3(helper, initialSeed, totalRuns, initialFailures);
+	});
+var $elm$core$Dict$isEmpty = function (dict) {
+	if (dict.$ === 'RBEmpty_elm_builtin') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm_explorations$test$Test$Fuzz$validatedFuzzTest = F3(
+	function (fuzzer, desc, getExpectation) {
+		var run = F2(
+			function (seed, runs) {
+				var failures = A4($elm_explorations$test$Test$Fuzz$getFailures, fuzzer, getExpectation, seed, runs);
+				return $elm$core$Dict$isEmpty(failures) ? _List_fromArray(
+					[$elm_explorations$test$Test$Expectation$Pass]) : A2(
+					$elm$core$List$map,
+					$elm_explorations$test$Test$Fuzz$formatExpectation,
+					$elm$core$Dict$toList(failures));
+			});
+		return A2(
+			$elm_explorations$test$Test$Internal$Labeled,
+			desc,
+			$elm_explorations$test$Test$Internal$FuzzTest(run));
+	});
+var $elm_explorations$test$Test$Fuzz$fuzzTest = F3(
+	function (fuzzer, untrimmedDesc, getExpectation) {
+		var desc = $elm$core$String$trim(untrimmedDesc);
+		if ($elm$core$String$isEmpty(desc)) {
+			return $elm_explorations$test$Test$Internal$blankDescriptionFailure;
+		} else {
+			if (fuzzer.$ === 'Err') {
+				var reason = fuzzer.a;
+				return $elm_explorations$test$Test$Internal$failNow(
+					{
+						description: reason,
+						reason: $elm_explorations$test$Test$Runner$Failure$Invalid($elm_explorations$test$Test$Runner$Failure$InvalidFuzzer)
+					});
+			} else {
+				var validFuzzer = fuzzer.a;
+				return A3($elm_explorations$test$Test$Fuzz$validatedFuzzTest, validFuzzer, desc, getExpectation);
+			}
+		}
+	});
+var $elm_explorations$test$Test$fuzz = $elm_explorations$test$Test$Fuzz$fuzzTest;
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$random$Random$map2 = F3(
+	function (func, _v0, _v1) {
+		var genA = _v0.a;
+		var genB = _v1.a;
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var _v2 = genA(seed0);
+				var a = _v2.a;
+				var seed1 = _v2.b;
+				var _v3 = genB(seed1);
+				var b = _v3.a;
+				var seed2 = _v3.b;
+				return _Utils_Tuple2(
+					A2(func, a, b),
+					seed2);
+			});
+	});
+var $elm$core$Result$map2 = F3(
+	function (func, ra, rb) {
+		if (ra.$ === 'Err') {
+			var x = ra.a;
+			return $elm$core$Result$Err(x);
+		} else {
+			var a = ra.a;
+			if (rb.$ === 'Err') {
+				var x = rb.a;
+				return $elm$core$Result$Err(x);
+			} else {
+				var b = rb.a;
+				return $elm$core$Result$Ok(
+					A2(func, a, b));
+			}
+		}
+	});
+var $elm_explorations$test$Lazy$List$Cons = F2(
+	function (a, b) {
+		return {$: 'Cons', a: a, b: b};
+	});
+var $elm_explorations$test$Lazy$Lazy = function (a) {
+	return {$: 'Lazy', a: a};
+};
+var $elm_explorations$test$Lazy$lazy = function (thunk) {
+	return $elm_explorations$test$Lazy$Lazy(thunk);
+};
+var $elm_explorations$test$Lazy$List$append = F2(
+	function (list1, list2) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				var _v1 = $elm_explorations$test$Lazy$force(list1);
+				if (_v1.$ === 'Nil') {
+					return $elm_explorations$test$Lazy$force(list2);
+				} else {
+					var first = _v1.a;
+					var rest = _v1.b;
+					return A2(
+						$elm_explorations$test$Lazy$List$Cons,
+						first,
+						A2($elm_explorations$test$Lazy$List$append, rest, list2));
+				}
+			});
+	});
+var $elm_explorations$test$Lazy$List$Nil = {$: 'Nil'};
+var $elm_explorations$test$Lazy$List$map = F2(
+	function (f, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				var _v1 = $elm_explorations$test$Lazy$force(list);
+				if (_v1.$ === 'Nil') {
+					return $elm_explorations$test$Lazy$List$Nil;
+				} else {
+					var first = _v1.a;
+					var rest = _v1.b;
+					return A2(
+						$elm_explorations$test$Lazy$List$Cons,
+						f(first),
+						A2($elm_explorations$test$Lazy$List$map, f, rest));
+				}
+			});
+	});
+var $elm_explorations$test$Fuzz$map2RoseTree = F3(
+	function (transform, rose1, rose2) {
+		var root1 = rose1.a;
+		var children1 = rose1.b;
+		var root2 = rose2.a;
+		var children2 = rose2.b;
+		var shrink2 = A2(
+			$elm_explorations$test$Lazy$List$map,
+			function (subtree) {
+				return A3($elm_explorations$test$Fuzz$map2RoseTree, transform, rose1, subtree);
+			},
+			children2);
+		var shrink1 = A2(
+			$elm_explorations$test$Lazy$List$map,
+			function (subtree) {
+				return A3($elm_explorations$test$Fuzz$map2RoseTree, transform, subtree, rose2);
+			},
+			children1);
+		var root = A2(transform, root1, root2);
+		return A2(
+			$elm_explorations$test$RoseTree$Rose,
+			root,
+			A2($elm_explorations$test$Lazy$List$append, shrink1, shrink2));
+	});
+var $elm_explorations$test$Fuzz$map2 = F3(
+	function (transform, fuzzA, fuzzB) {
+		return A3(
+			A2(
+				$elm$core$Basics$composeL,
+				A2($elm$core$Basics$composeL, $elm$core$Result$map2, $elm$random$Random$map2),
+				$elm_explorations$test$Fuzz$map2RoseTree),
+			transform,
+			fuzzA,
+			fuzzB);
+	});
+var $elm_explorations$test$Fuzz$tuple = function (_v0) {
+	var fuzzerA = _v0.a;
+	var fuzzerB = _v0.b;
+	return A3(
+		$elm_explorations$test$Fuzz$map2,
+		F2(
+			function (a, b) {
+				return _Utils_Tuple2(a, b);
+			}),
+		fuzzerA,
+		fuzzerB);
+};
+var $elm_explorations$test$Test$fuzz2 = F3(
+	function (fuzzA, fuzzB, desc) {
+		var fuzzer = $elm_explorations$test$Fuzz$tuple(
+			_Utils_Tuple2(fuzzA, fuzzB));
+		return A2(
+			$elm$core$Basics$composeR,
+			F2(
+				function (f, _v0) {
+					var a = _v0.a;
+					var b = _v0.b;
+					return A2(f, a, b);
+				}),
+			A2($elm_explorations$test$Test$fuzz, fuzzer, desc));
+	});
+var $elm$random$Random$constant = function (value) {
+	return $elm$random$Random$Generator(
+		function (seed) {
+			return _Utils_Tuple2(value, seed);
+		});
+};
+var $elm_explorations$test$Fuzz$custom = F2(
+	function (generator, shrinker) {
+		var shrinkTree = function (a) {
+			return A2(
+				$elm_explorations$test$RoseTree$Rose,
+				a,
+				$elm_explorations$test$Lazy$lazy(
+					function (_v0) {
+						return $elm_explorations$test$Lazy$force(
+							A2(
+								$elm_explorations$test$Lazy$List$map,
+								shrinkTree,
+								shrinker(a)));
+					}));
+		};
+		return $elm$core$Result$Ok(
+			A2($elm$random$Random$map, shrinkTree, generator));
+	});
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $elm$random$Random$andThen = F2(
+	function (callback, _v0) {
+		var genA = _v0.a;
+		return $elm$random$Random$Generator(
+			function (seed) {
+				var _v1 = genA(seed);
+				var result = _v1.a;
+				var newSeed = _v1.b;
+				var _v2 = callback(result);
+				var genB = _v2.a;
+				return genB(newSeed);
+			});
+	});
+var $elm$random$Random$Seed = F2(
+	function (a, b) {
+		return {$: 'Seed', a: a, b: b};
+	});
+var $elm$random$Random$next = function (_v0) {
+	var state0 = _v0.a;
+	var incr = _v0.b;
+	return A2($elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
+};
+var $elm$core$Bitwise$xor = _Bitwise_xor;
+var $elm$random$Random$peel = function (_v0) {
+	var state = _v0.a;
+	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
+	return ((word >>> 22) ^ word) >>> 0;
+};
+var $elm$random$Random$float = F2(
+	function (a, b) {
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var seed1 = $elm$random$Random$next(seed0);
+				var range = $elm$core$Basics$abs(b - a);
+				var n1 = $elm$random$Random$peel(seed1);
+				var n0 = $elm$random$Random$peel(seed0);
+				var lo = (134217727 & n1) * 1.0;
+				var hi = (67108863 & n0) * 1.0;
+				var val = ((hi * 134217728.0) + lo) / 9007199254740992.0;
+				var scaled = (val * range) + a;
+				return _Utils_Tuple2(
+					scaled,
+					$elm$random$Random$next(seed1));
+			});
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $elm_explorations$test$MicroRandomExtra$frequency = F2(
+	function (firstPair, restPairs) {
+		var total = $elm$core$List$sum(
+			A2(
+				$elm$core$List$map,
+				A2($elm$core$Basics$composeL, $elm$core$Basics$abs, $elm$core$Tuple$first),
+				A2($elm$core$List$cons, firstPair, restPairs)));
+		var pick = F3(
+			function (_v0, restChoices, n) {
+				pick:
+				while (true) {
+					var k = _v0.a;
+					var g = _v0.b;
+					if (_Utils_cmp(n, k) < 1) {
+						return g;
+					} else {
+						if (!restChoices.b) {
+							return g;
+						} else {
+							var next = restChoices.a;
+							var rest = restChoices.b;
+							var $temp$_v0 = next,
+								$temp$restChoices = rest,
+								$temp$n = n - k;
+							_v0 = $temp$_v0;
+							restChoices = $temp$restChoices;
+							n = $temp$n;
+							continue pick;
+						}
+					}
+				}
+			});
+		return A2(
+			$elm$random$Random$andThen,
+			A2(pick, firstPair, restPairs),
+			A2($elm$random$Random$float, 0, total));
+	});
 var $elm$core$String$fromInt = _String_fromNumber;
-var $elm$core$String$split = F2(
-	function (sep, string) {
-		return _List_fromArray(
-			A2(_String_split, sep, string));
+var $elm$core$Basics$remainderBy = _Basics_remainderBy;
+var $elm$random$Random$int = F2(
+	function (a, b) {
+		return $elm$random$Random$Generator(
+			function (seed0) {
+				var _v0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
+				var lo = _v0.a;
+				var hi = _v0.b;
+				var range = (hi - lo) + 1;
+				if (!((range - 1) & range)) {
+					return _Utils_Tuple2(
+						(((range - 1) & $elm$random$Random$peel(seed0)) >>> 0) + lo,
+						$elm$random$Random$next(seed0));
+				} else {
+					var threshhold = (((-range) >>> 0) % range) >>> 0;
+					var accountForBias = function (seed) {
+						accountForBias:
+						while (true) {
+							var x = $elm$random$Random$peel(seed);
+							var seedN = $elm$random$Random$next(seed);
+							if (_Utils_cmp(x, threshhold) < 0) {
+								var $temp$seed = seedN;
+								seed = $temp$seed;
+								continue accountForBias;
+							} else {
+								return _Utils_Tuple2((x % range) + lo, seedN);
+							}
+						}
+					};
+					return accountForBias(seed0);
+				}
+			});
 	});
-var $elm$json$Json$Decode$indent = function (str) {
-	return A2(
-		$elm$core$String$join,
-		'\n    ',
-		A2($elm$core$String$split, '\n', str));
+var $elm_explorations$test$Lazy$List$cons = F2(
+	function (a, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				return A2($elm_explorations$test$Lazy$List$Cons, a, list);
+			});
+	});
+var $elm_explorations$test$Lazy$List$empty = $elm_explorations$test$Lazy$lazy(
+	function (_v0) {
+		return $elm_explorations$test$Lazy$List$Nil;
+	});
+var $elm_explorations$test$Shrink$seriesInt = F2(
+	function (low, high) {
+		if (_Utils_cmp(low, high) > -1) {
+			return $elm_explorations$test$Lazy$List$empty;
+		} else {
+			if (_Utils_eq(low, high - 1)) {
+				return A2($elm_explorations$test$Lazy$List$cons, low, $elm_explorations$test$Lazy$List$empty);
+			} else {
+				var low_ = low + (((high - low) / 2) | 0);
+				return A2(
+					$elm_explorations$test$Lazy$List$cons,
+					low,
+					A2($elm_explorations$test$Shrink$seriesInt, low_, high));
+			}
+		}
+	});
+var $elm_explorations$test$Shrink$int = function (n) {
+	return (n < 0) ? A2(
+		$elm_explorations$test$Lazy$List$cons,
+		-n,
+		A2(
+			$elm_explorations$test$Lazy$List$map,
+			$elm$core$Basics$mul(-1),
+			A2($elm_explorations$test$Shrink$seriesInt, 0, -n))) : A2($elm_explorations$test$Shrink$seriesInt, 0, n);
 };
+var $elm_explorations$test$Lazy$List$keepIf = F2(
+	function (predicate, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				var _v1 = $elm_explorations$test$Lazy$force(list);
+				if (_v1.$ === 'Nil') {
+					return $elm_explorations$test$Lazy$List$Nil;
+				} else {
+					var first = _v1.a;
+					var rest = _v1.b;
+					return predicate(first) ? A2(
+						$elm_explorations$test$Lazy$List$Cons,
+						first,
+						A2($elm_explorations$test$Lazy$List$keepIf, predicate, rest)) : $elm_explorations$test$Lazy$force(
+						A2($elm_explorations$test$Lazy$List$keepIf, predicate, rest));
+				}
+			});
+	});
+var $elm_explorations$test$Shrink$keepIf = F3(
+	function (predicate, shrinker, a) {
+		return A2(
+			$elm_explorations$test$Lazy$List$keepIf,
+			predicate,
+			shrinker(a));
+	});
+var $elm_explorations$test$Fuzz$intRange = F2(
+	function (lo, hi) {
+		return (_Utils_cmp(hi, lo) < 0) ? $elm$core$Result$Err(
+			'Fuzz.intRange was given a lower bound of ' + ($elm$core$String$fromInt(lo) + (' which is greater than the upper bound, ' + ($elm$core$String$fromInt(hi) + '.')))) : A2(
+			$elm_explorations$test$Fuzz$custom,
+			A2(
+				$elm_explorations$test$MicroRandomExtra$frequency,
+				_Utils_Tuple2(
+					8,
+					A2($elm$random$Random$int, lo, hi)),
+				_List_fromArray(
+					[
+						_Utils_Tuple2(
+						1,
+						$elm$random$Random$constant(lo)),
+						_Utils_Tuple2(
+						1,
+						$elm$random$Random$constant(hi))
+					])),
+			A2(
+				$elm_explorations$test$Shrink$keepIf,
+				function (i) {
+					return (_Utils_cmp(i, lo) > -1) && (_Utils_cmp(i, hi) < 1);
+				},
+				$elm_explorations$test$Shrink$int));
+	});
 var $elm$core$List$length = function (xs) {
 	return A3(
 		$elm$core$List$foldl,
@@ -4685,7 +5740,76 @@ var $elm$core$List$length = function (xs) {
 		0,
 		xs);
 };
-var $elm$core$List$map2 = _List_map2;
+var $elm$random$Random$listHelp = F4(
+	function (revList, n, gen, seed) {
+		listHelp:
+		while (true) {
+			if (n < 1) {
+				return _Utils_Tuple2(revList, seed);
+			} else {
+				var _v0 = gen(seed);
+				var value = _v0.a;
+				var newSeed = _v0.b;
+				var $temp$revList = A2($elm$core$List$cons, value, revList),
+					$temp$n = n - 1,
+					$temp$gen = gen,
+					$temp$seed = newSeed;
+				revList = $temp$revList;
+				n = $temp$n;
+				gen = $temp$gen;
+				seed = $temp$seed;
+				continue listHelp;
+			}
+		}
+	});
+var $elm$random$Random$list = F2(
+	function (n, _v0) {
+		var gen = _v0.a;
+		return $elm$random$Random$Generator(
+			function (seed) {
+				return A4($elm$random$Random$listHelp, _List_Nil, n, gen, seed);
+			});
+	});
+var $elm_explorations$test$Lazy$List$flatten = function (list) {
+	return $elm_explorations$test$Lazy$lazy(
+		function (_v0) {
+			var _v1 = $elm_explorations$test$Lazy$force(list);
+			if (_v1.$ === 'Nil') {
+				return $elm_explorations$test$Lazy$List$Nil;
+			} else {
+				var first = _v1.a;
+				var rest = _v1.b;
+				return $elm_explorations$test$Lazy$force(
+					A2(
+						$elm_explorations$test$Lazy$List$append,
+						first,
+						$elm_explorations$test$Lazy$List$flatten(rest)));
+			}
+		});
+};
+var $elm_explorations$test$Lazy$List$andThen = F2(
+	function (f, list) {
+		return $elm_explorations$test$Lazy$List$flatten(
+			A2($elm_explorations$test$Lazy$List$map, f, list));
+	});
+var $elm_explorations$test$Lazy$List$fromList = A2($elm$core$List$foldr, $elm_explorations$test$Lazy$List$cons, $elm_explorations$test$Lazy$List$empty);
+var $elm_explorations$test$Lazy$List$iterate = F2(
+	function (f, a) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				return A2(
+					$elm_explorations$test$Lazy$List$Cons,
+					a,
+					A2(
+						$elm_explorations$test$Lazy$List$iterate,
+						f,
+						f(a)));
+			});
+	});
+var $elm_explorations$test$Lazy$List$numbers = A2(
+	$elm_explorations$test$Lazy$List$iterate,
+	$elm$core$Basics$add(1),
+	1);
 var $elm$core$List$rangeHelp = F3(
 	function (lo, hi, list) {
 		rangeHelp:
@@ -4707,6 +5831,757 @@ var $elm$core$List$range = F2(
 	function (lo, hi) {
 		return A3($elm$core$List$rangeHelp, lo, hi, _List_Nil);
 	});
+var $elm_explorations$test$Lazy$List$take = F2(
+	function (n, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				if (n <= 0) {
+					return $elm_explorations$test$Lazy$List$Nil;
+				} else {
+					var _v1 = $elm_explorations$test$Lazy$force(list);
+					if (_v1.$ === 'Nil') {
+						return $elm_explorations$test$Lazy$List$Nil;
+					} else {
+						var first = _v1.a;
+						var rest = _v1.b;
+						return A2(
+							$elm_explorations$test$Lazy$List$Cons,
+							first,
+							A2($elm_explorations$test$Lazy$List$take, n - 1, rest));
+					}
+				}
+			});
+	});
+var $elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2($elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var $elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return $elm$core$List$reverse(
+			A3($elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var $elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _v0 = _Utils_Tuple2(n, list);
+			_v0$1:
+			while (true) {
+				_v0$5:
+				while (true) {
+					if (!_v0.b.b) {
+						return list;
+					} else {
+						if (_v0.b.b.b) {
+							switch (_v0.a) {
+								case 1:
+									break _v0$1;
+								case 2:
+									var _v2 = _v0.b;
+									var x = _v2.a;
+									var _v3 = _v2.b;
+									var y = _v3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_v0.b.b.b.b) {
+										var _v4 = _v0.b;
+										var x = _v4.a;
+										var _v5 = _v4.b;
+										var y = _v5.a;
+										var _v6 = _v5.b;
+										var z = _v6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _v0$5;
+									}
+								default:
+									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
+										var _v7 = _v0.b;
+										var x = _v7.a;
+										var _v8 = _v7.b;
+										var y = _v8.a;
+										var _v9 = _v8.b;
+										var z = _v9.a;
+										var _v10 = _v9.b;
+										var w = _v10.a;
+										var tl = _v10.b;
+										return (ctr > 1000) ? A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _v0$5;
+									}
+							}
+						} else {
+							if (_v0.a === 1) {
+								break _v0$1;
+							} else {
+								break _v0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _v1 = _v0.b;
+			var x = _v1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var $elm$core$List$take = F2(
+	function (n, list) {
+		return A3($elm$core$List$takeFast, 0, n, list);
+	});
+var $elm_explorations$test$Fuzz$listShrinkRecurse = function (listOfTrees) {
+	var shrinkOne = F2(
+		function (prefix, aList) {
+			if (!aList.b) {
+				return $elm_explorations$test$Lazy$List$empty;
+			} else {
+				var _v4 = aList.a;
+				var x = _v4.a;
+				var shrunkenXs = _v4.b;
+				var more = aList.b;
+				return A2(
+					$elm_explorations$test$Lazy$List$map,
+					function (childTree) {
+						return $elm_explorations$test$Fuzz$listShrinkRecurse(
+							_Utils_ap(
+								prefix,
+								A2($elm$core$List$cons, childTree, more)));
+					},
+					shrunkenXs);
+			}
+		});
+	var root = A2($elm$core$List$map, $elm_explorations$test$RoseTree$root, listOfTrees);
+	var removeOne = F2(
+		function (index, aList) {
+			return A2(
+				$elm$core$List$append,
+				A2($elm$core$List$take, index, aList),
+				A2($elm$core$List$drop, index + 1, aList));
+		});
+	var n = $elm$core$List$length(listOfTrees);
+	var shortened = $elm_explorations$test$Lazy$lazy(
+		function (_v2) {
+			return $elm_explorations$test$Lazy$force(
+				A2(
+					$elm_explorations$test$Lazy$List$map,
+					$elm_explorations$test$Fuzz$listShrinkRecurse,
+					A2(
+						$elm_explorations$test$Lazy$List$map,
+						function (index) {
+							return A2(removeOne, index, listOfTrees);
+						},
+						$elm_explorations$test$Lazy$List$fromList(
+							A2($elm$core$List$range, 0, n - 1)))));
+		});
+	var shrunkenVals = $elm_explorations$test$Lazy$lazy(
+		function (_v1) {
+			return $elm_explorations$test$Lazy$force(
+				A2(
+					$elm_explorations$test$Lazy$List$andThen,
+					function (i) {
+						return A2(
+							shrinkOne,
+							A2($elm$core$List$take, i, listOfTrees),
+							A2($elm$core$List$drop, i, listOfTrees));
+					},
+					A2(
+						$elm_explorations$test$Lazy$List$take,
+						n,
+						A2(
+							$elm_explorations$test$Lazy$List$map,
+							function (i) {
+								return i - 1;
+							},
+							$elm_explorations$test$Lazy$List$numbers))));
+		});
+	var dropSecondHalf = function (list_) {
+		return $elm_explorations$test$Fuzz$listShrinkRecurse(
+			A2(
+				$elm$core$List$take,
+				($elm$core$List$length(list_) / 2) | 0,
+				list_));
+	};
+	var dropFirstHalf = function (list_) {
+		return $elm_explorations$test$Fuzz$listShrinkRecurse(
+			A2(
+				$elm$core$List$drop,
+				($elm$core$List$length(list_) / 2) | 0,
+				list_));
+	};
+	var halved = (n >= 8) ? $elm_explorations$test$Lazy$lazy(
+		function (_v0) {
+			return $elm_explorations$test$Lazy$force(
+				$elm_explorations$test$Lazy$List$fromList(
+					_List_fromArray(
+						[
+							dropFirstHalf(listOfTrees),
+							dropSecondHalf(listOfTrees)
+						])));
+		}) : $elm_explorations$test$Lazy$List$empty;
+	return A2(
+		$elm_explorations$test$RoseTree$Rose,
+		root,
+		A2(
+			$elm_explorations$test$Lazy$List$append,
+			halved,
+			A2($elm_explorations$test$Lazy$List$append, shortened, shrunkenVals)));
+};
+var $elm_explorations$test$Fuzz$mapChildren = F2(
+	function (fn, _v0) {
+		var root = _v0.a;
+		var children = _v0.b;
+		return A2(
+			$elm_explorations$test$RoseTree$Rose,
+			root,
+			fn(children));
+	});
+var $elm_explorations$test$RoseTree$singleton = function (a) {
+	return A2($elm_explorations$test$RoseTree$Rose, a, $elm_explorations$test$Lazy$List$empty);
+};
+var $elm_explorations$test$Fuzz$listShrinkHelp = function (listOfTrees) {
+	return A2(
+		$elm_explorations$test$Fuzz$mapChildren,
+		$elm_explorations$test$Lazy$List$cons(
+			$elm_explorations$test$RoseTree$singleton(_List_Nil)),
+		$elm_explorations$test$Fuzz$listShrinkRecurse(listOfTrees));
+};
+var $elm$core$Result$map = F2(
+	function (func, ra) {
+		if (ra.$ === 'Ok') {
+			var a = ra.a;
+			return $elm$core$Result$Ok(
+				func(a));
+		} else {
+			var e = ra.a;
+			return $elm$core$Result$Err(e);
+		}
+	});
+var $elm_explorations$test$Fuzz$list = function (fuzzer) {
+	var genLength = A2(
+		$elm_explorations$test$MicroRandomExtra$frequency,
+		_Utils_Tuple2(
+			1,
+			$elm$random$Random$constant(0)),
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				1,
+				$elm$random$Random$constant(1)),
+				_Utils_Tuple2(
+				3,
+				A2($elm$random$Random$int, 2, 10)),
+				_Utils_Tuple2(
+				2,
+				A2($elm$random$Random$int, 10, 100)),
+				_Utils_Tuple2(
+				0.5,
+				A2($elm$random$Random$int, 100, 400))
+			]));
+	return A2(
+		$elm$core$Result$map,
+		function (validFuzzer) {
+			return A2(
+				$elm$random$Random$map,
+				$elm_explorations$test$Fuzz$listShrinkHelp,
+				A2(
+					$elm$random$Random$andThen,
+					function (a) {
+						return A2($elm$random$Random$list, a, validFuzzer);
+					},
+					genLength));
+		},
+		fuzzer);
+};
+var $elm$core$Char$fromCode = _Char_fromCode;
+var $elm_explorations$test$Fuzz$asciiCharGenerator = A2(
+	$elm$random$Random$map,
+	$elm$core$Char$fromCode,
+	A2($elm$random$Random$int, 32, 126));
+var $elm$core$String$fromList = _String_fromList;
+var $elm_explorations$test$MicroRandomExtra$lengthString = F2(
+	function (charGenerator, stringLength) {
+		return A2(
+			$elm$random$Random$map,
+			$elm$core$String$fromList,
+			A2($elm$random$Random$list, stringLength, charGenerator));
+	});
+var $elm_explorations$test$Shrink$atLeastInt = F2(
+	function (min, n) {
+		return ((n < 0) && (_Utils_cmp(n, min) > -1)) ? A2(
+			$elm_explorations$test$Lazy$List$cons,
+			-n,
+			A2(
+				$elm_explorations$test$Lazy$List$map,
+				$elm$core$Basics$mul(-1),
+				A2($elm_explorations$test$Shrink$seriesInt, 0, -n))) : A2(
+			$elm_explorations$test$Shrink$seriesInt,
+			A2($elm$core$Basics$max, 0, min),
+			n);
+	});
+var $elm_explorations$test$Shrink$convert = F4(
+	function (f, g, shrinker, b) {
+		return A2(
+			$elm_explorations$test$Lazy$List$map,
+			f,
+			shrinker(
+				g(b)));
+	});
+var $elm_explorations$test$Shrink$atLeastChar = function (ch) {
+	return A3(
+		$elm_explorations$test$Shrink$convert,
+		$elm$core$Char$fromCode,
+		$elm$core$Char$toCode,
+		$elm_explorations$test$Shrink$atLeastInt(
+			$elm$core$Char$toCode(ch)));
+};
+var $elm_explorations$test$Shrink$character = $elm_explorations$test$Shrink$atLeastChar(
+	$elm$core$Char$fromCode(32));
+var $elm_explorations$test$Lazy$List$drop = F2(
+	function (n, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				if (n <= 0) {
+					return $elm_explorations$test$Lazy$force(list);
+				} else {
+					var _v1 = $elm_explorations$test$Lazy$force(list);
+					if (_v1.$ === 'Nil') {
+						return $elm_explorations$test$Lazy$List$Nil;
+					} else {
+						var first = _v1.a;
+						var rest = _v1.b;
+						return $elm_explorations$test$Lazy$force(
+							A2($elm_explorations$test$Lazy$List$drop, n - 1, rest));
+					}
+				}
+			});
+	});
+var $elm_explorations$test$Lazy$List$isEmpty = function (list) {
+	var _v0 = $elm_explorations$test$Lazy$force(list);
+	if (_v0.$ === 'Nil') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $elm_explorations$test$Lazy$List$reduce = F3(
+	function (reducer, b, list) {
+		reduce:
+		while (true) {
+			var _v0 = $elm_explorations$test$Lazy$force(list);
+			if (_v0.$ === 'Nil') {
+				return b;
+			} else {
+				var first = _v0.a;
+				var rest = _v0.b;
+				var $temp$reducer = reducer,
+					$temp$b = A2(reducer, first, b),
+					$temp$list = rest;
+				reducer = $temp$reducer;
+				b = $temp$b;
+				list = $temp$list;
+				continue reduce;
+			}
+		}
+	});
+var $elm_explorations$test$Lazy$List$length = A2(
+	$elm_explorations$test$Lazy$List$reduce,
+	F2(
+		function (_v0, n) {
+			return n + 1;
+		}),
+	0);
+var $elm_explorations$test$Lazy$List$takeWhile = F2(
+	function (predicate, list) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				var _v1 = $elm_explorations$test$Lazy$force(list);
+				if (_v1.$ === 'Nil') {
+					return $elm_explorations$test$Lazy$List$Nil;
+				} else {
+					var first = _v1.a;
+					var rest = _v1.b;
+					return predicate(first) ? A2(
+						$elm_explorations$test$Lazy$List$Cons,
+						first,
+						A2($elm_explorations$test$Lazy$List$takeWhile, predicate, rest)) : $elm_explorations$test$Lazy$List$Nil;
+				}
+			});
+	});
+var $elm_explorations$test$Shrink$lazylist = F2(
+	function (shrinker, l) {
+		return $elm_explorations$test$Lazy$lazy(
+			function (_v0) {
+				var shrinkOneHelp = function (lst) {
+					return $elm_explorations$test$Lazy$lazy(
+						function (_v1) {
+							var _v2 = $elm_explorations$test$Lazy$force(lst);
+							if (_v2.$ === 'Nil') {
+								return $elm_explorations$test$Lazy$force($elm_explorations$test$Lazy$List$empty);
+							} else {
+								var x = _v2.a;
+								var xs = _v2.b;
+								return $elm_explorations$test$Lazy$force(
+									A2(
+										$elm_explorations$test$Lazy$List$append,
+										A2(
+											$elm_explorations$test$Lazy$List$map,
+											function (val) {
+												return A2($elm_explorations$test$Lazy$List$cons, val, xs);
+											},
+											shrinker(x)),
+										A2(
+											$elm_explorations$test$Lazy$List$map,
+											$elm_explorations$test$Lazy$List$cons(x),
+											shrinkOneHelp(xs))));
+							}
+						});
+				};
+				var removes = F3(
+					function (k_, n_, l_) {
+						return $elm_explorations$test$Lazy$lazy(
+							function (_v3) {
+								if (_Utils_cmp(k_, n_) > 0) {
+									return $elm_explorations$test$Lazy$force($elm_explorations$test$Lazy$List$empty);
+								} else {
+									if ($elm_explorations$test$Lazy$List$isEmpty(l_)) {
+										return $elm_explorations$test$Lazy$force(
+											A2($elm_explorations$test$Lazy$List$cons, $elm_explorations$test$Lazy$List$empty, $elm_explorations$test$Lazy$List$empty));
+									} else {
+										var rest = A2($elm_explorations$test$Lazy$List$drop, k_, l_);
+										var first = A2($elm_explorations$test$Lazy$List$take, k_, l_);
+										return $elm_explorations$test$Lazy$force(
+											A2(
+												$elm_explorations$test$Lazy$List$cons,
+												rest,
+												A2(
+													$elm_explorations$test$Lazy$List$map,
+													$elm_explorations$test$Lazy$List$append(first),
+													A3(removes, k_, n_ - k_, rest))));
+									}
+								}
+							});
+					});
+				var n = $elm_explorations$test$Lazy$List$length(l);
+				return $elm_explorations$test$Lazy$force(
+					A2(
+						$elm_explorations$test$Lazy$List$append,
+						A2(
+							$elm_explorations$test$Lazy$List$andThen,
+							function (k) {
+								return A3(removes, k, n, l);
+							},
+							A2(
+								$elm_explorations$test$Lazy$List$takeWhile,
+								function (x) {
+									return x > 0;
+								},
+								A2(
+									$elm_explorations$test$Lazy$List$iterate,
+									function (num) {
+										return (num / 2) | 0;
+									},
+									n))),
+						shrinkOneHelp(l)));
+			});
+	});
+var $elm_explorations$test$Lazy$List$toList = function (list) {
+	var _v0 = $elm_explorations$test$Lazy$force(list);
+	if (_v0.$ === 'Nil') {
+		return _List_Nil;
+	} else {
+		var first = _v0.a;
+		var rest = _v0.b;
+		return A2(
+			$elm$core$List$cons,
+			first,
+			$elm_explorations$test$Lazy$List$toList(rest));
+	}
+};
+var $elm_explorations$test$Shrink$list = function (shrinker) {
+	return A3(
+		$elm_explorations$test$Shrink$convert,
+		$elm_explorations$test$Lazy$List$toList,
+		$elm_explorations$test$Lazy$List$fromList,
+		$elm_explorations$test$Shrink$lazylist(shrinker));
+};
+var $elm$core$String$foldr = _String_foldr;
+var $elm$core$String$toList = function (string) {
+	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
+};
+var $elm_explorations$test$Shrink$string = A3(
+	$elm_explorations$test$Shrink$convert,
+	$elm$core$String$fromList,
+	$elm$core$String$toList,
+	$elm_explorations$test$Shrink$list($elm_explorations$test$Shrink$character));
+var $elm_explorations$test$MicroRandomExtra$sample = function () {
+	var find = F2(
+		function (k, ys) {
+			find:
+			while (true) {
+				if (!ys.b) {
+					return $elm$core$Maybe$Nothing;
+				} else {
+					var z = ys.a;
+					var zs = ys.b;
+					if (!k) {
+						return $elm$core$Maybe$Just(z);
+					} else {
+						var $temp$k = k - 1,
+							$temp$ys = zs;
+						k = $temp$k;
+						ys = $temp$ys;
+						continue find;
+					}
+				}
+			}
+		});
+	return function (xs) {
+		return A2(
+			$elm$random$Random$map,
+			function (i) {
+				return A2(find, i, xs);
+			},
+			A2(
+				$elm$random$Random$int,
+				0,
+				$elm$core$List$length(xs) - 1));
+	};
+}();
+var $elm_explorations$test$Fuzz$whitespaceCharGenerator = A2(
+	$elm$random$Random$map,
+	$elm$core$Maybe$withDefault(
+		_Utils_chr(' ')),
+	$elm_explorations$test$MicroRandomExtra$sample(
+		_List_fromArray(
+			[
+				_Utils_chr(' '),
+				_Utils_chr('\t'),
+				_Utils_chr('\n')
+			])));
+var $elm_explorations$test$Fuzz$string = function () {
+	var whitespaceGenerator = A2(
+		$elm$random$Random$andThen,
+		$elm_explorations$test$MicroRandomExtra$lengthString($elm_explorations$test$Fuzz$whitespaceCharGenerator),
+		A2($elm$random$Random$int, 1, 10));
+	var asciiGenerator = A2(
+		$elm$random$Random$andThen,
+		$elm_explorations$test$MicroRandomExtra$lengthString($elm_explorations$test$Fuzz$asciiCharGenerator),
+		A2(
+			$elm_explorations$test$MicroRandomExtra$frequency,
+			_Utils_Tuple2(
+				3,
+				A2($elm$random$Random$int, 1, 10)),
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					0.2,
+					$elm$random$Random$constant(0)),
+					_Utils_Tuple2(
+					1,
+					A2($elm$random$Random$int, 11, 50)),
+					_Utils_Tuple2(
+					1,
+					A2($elm$random$Random$int, 50, 1000))
+				])));
+	return A2(
+		$elm_explorations$test$Fuzz$custom,
+		A2(
+			$elm_explorations$test$MicroRandomExtra$frequency,
+			_Utils_Tuple2(9, asciiGenerator),
+			_List_fromArray(
+				[
+					_Utils_Tuple2(1, whitespaceGenerator)
+				])),
+		$elm_explorations$test$Shrink$string);
+}();
+var $author$project$HelperTest$deleteAt_ = A2(
+	$elm_explorations$test$Test$describe,
+	'delete',
+	_List_fromArray(
+		[
+			A4(
+			$elm_explorations$test$Test$fuzz2,
+			$elm_explorations$test$Fuzz$list($elm_explorations$test$Fuzz$string),
+			A2($elm_explorations$test$Fuzz$intRange, 0, 50),
+			'delete from list at index',
+			F2(
+				function (l, id) {
+					return A2(
+						$elm_explorations$test$Expect$equal,
+						(_Utils_cmp(
+							id,
+							$elm$core$List$length(l)) > -1) ? $elm$core$List$length(l) : A2(
+							$elm$core$Basics$max,
+							0,
+							$elm$core$List$length(l) - 1),
+						$elm$core$List$length(
+							A2($author$project$HomePage$deleteAt, id, l)));
+				}))
+		]));
+var $author$project$ParserTest$floating = A2(
+	$elm_explorations$test$Test$test,
+	'floating',
+	function (_v0) {
+		var output = {
+			q: $elm$core$Maybe$Just(2.5),
+			rest: 'whole milk',
+			unit: $elm$core$Maybe$Just('cups')
+		};
+		var input = '2.5 cups  whole milk';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$ParserTest$frac = A2(
+	$elm_explorations$test$Test$test,
+	'fraction',
+	function (_v0) {
+		var output = {
+			q: $elm$core$Maybe$Just(0.4),
+			rest: 'whole milk',
+			unit: $elm$core$Maybe$Just('cups')
+		};
+		var input = ' 2/5 cups  whole milk';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$ParserTest$full = A2(
+	$elm_explorations$test$Test$test,
+	'full',
+	function (_v0) {
+		var output = {
+			q: $elm$core$Maybe$Just(10),
+			rest: 'of butter',
+			unit: $elm$core$Maybe$Just('tbsp.')
+		};
+		var input = '10 tbsp. of butter';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$HomePage$ingredientize = $elm$core$List$map(
+	function (str) {
+		var _v0 = $author$project$Parsing$asIngredient(str);
+		var q = _v0.q;
+		var unit = _v0.unit;
+		var rest = _v0.rest;
+		if (q.$ === 'Nothing') {
+			return {q: $elm$core$Maybe$Nothing, rest: rest, unit: unit};
+		} else {
+			var x = q.a;
+			return {
+				q: $elm$core$Maybe$Just(x * 1000),
+				rest: rest,
+				unit: unit
+			};
+		}
+	});
+var $author$project$HelperTest$ingredientize_ = A2(
+	$elm_explorations$test$Test$test,
+	'string to ingredient',
+	function (_v0) {
+		var output = _List_fromArray(
+			[
+				{
+				q: $elm$core$Maybe$Just(1000),
+				rest: 'Blanched almond flour',
+				unit: $elm$core$Maybe$Just('cup')
+			},
+				{
+				q: $elm$core$Maybe$Just(250),
+				rest: 'Banana',
+				unit: $elm$core$Maybe$Nothing
+			}
+			]);
+		var input = _List_fromArray(
+			['1 cup Blanched almond flour', '1/4 Banana']);
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$ingredientize(input),
+			output);
+	});
+var $elm$json$Json$Decode$Failure = F2(
+	function (a, b) {
+		return {$: 'Failure', a: a, b: b};
+	});
+var $elm$json$Json$Decode$Field = F2(
+	function (a, b) {
+		return {$: 'Field', a: a, b: b};
+	});
+var $elm$json$Json$Decode$Index = F2(
+	function (a, b) {
+		return {$: 'Index', a: a, b: b};
+	});
+var $elm$json$Json$Decode$OneOf = function (a) {
+	return {$: 'OneOf', a: a};
+};
+var $elm$core$String$all = _String_all;
+var $elm$json$Json$Encode$encode = _Json_encode;
+var $elm$core$String$split = F2(
+	function (sep, string) {
+		return _List_fromArray(
+			A2(_String_split, sep, string));
+	});
+var $elm$json$Json$Decode$indent = function (str) {
+	return A2(
+		$elm$core$String$join,
+		'\n    ',
+		A2($elm$core$String$split, '\n', str));
+};
+var $elm$core$List$map2 = _List_map2;
 var $elm$core$List$indexedMap = F2(
 	function (f, xs) {
 		return A3(
@@ -4824,96 +6699,7 @@ var $elm$json$Json$Decode$errorToStringHelp = F2(
 			}
 		}
 	});
-var $elm$core$Array$branchFactor = 32;
-var $elm$core$Array$Array_elm_builtin = F4(
-	function (a, b, c, d) {
-		return {$: 'Array_elm_builtin', a: a, b: b, c: c, d: d};
-	});
-var $elm$core$Elm$JsArray$empty = _JsArray_empty;
-var $elm$core$Basics$ceiling = _Basics_ceiling;
-var $elm$core$Basics$logBase = F2(
-	function (base, number) {
-		return _Basics_log(number) / _Basics_log(base);
-	});
-var $elm$core$Array$shiftStep = $elm$core$Basics$ceiling(
-	A2($elm$core$Basics$logBase, 2, $elm$core$Array$branchFactor));
-var $elm$core$Array$empty = A4($elm$core$Array$Array_elm_builtin, 0, $elm$core$Array$shiftStep, $elm$core$Elm$JsArray$empty, $elm$core$Elm$JsArray$empty);
 var $elm$core$Elm$JsArray$initialize = _JsArray_initialize;
-var $elm$core$Array$Leaf = function (a) {
-	return {$: 'Leaf', a: a};
-};
-var $elm$core$Basics$floor = _Basics_floor;
-var $elm$core$Elm$JsArray$length = _JsArray_length;
-var $elm$core$Basics$max = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) > 0) ? x : y;
-	});
-var $elm$core$Array$SubTree = function (a) {
-	return {$: 'SubTree', a: a};
-};
-var $elm$core$Elm$JsArray$initializeFromList = _JsArray_initializeFromList;
-var $elm$core$Array$compressNodes = F2(
-	function (nodes, acc) {
-		compressNodes:
-		while (true) {
-			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodes);
-			var node = _v0.a;
-			var remainingNodes = _v0.b;
-			var newAcc = A2(
-				$elm$core$List$cons,
-				$elm$core$Array$SubTree(node),
-				acc);
-			if (!remainingNodes.b) {
-				return $elm$core$List$reverse(newAcc);
-			} else {
-				var $temp$nodes = remainingNodes,
-					$temp$acc = newAcc;
-				nodes = $temp$nodes;
-				acc = $temp$acc;
-				continue compressNodes;
-			}
-		}
-	});
-var $elm$core$Array$treeFromBuilder = F2(
-	function (nodeList, nodeListSize) {
-		treeFromBuilder:
-		while (true) {
-			var newNodeSize = $elm$core$Basics$ceiling(nodeListSize / $elm$core$Array$branchFactor);
-			if (newNodeSize === 1) {
-				return A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodeList).a;
-			} else {
-				var $temp$nodeList = A2($elm$core$Array$compressNodes, nodeList, _List_Nil),
-					$temp$nodeListSize = newNodeSize;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue treeFromBuilder;
-			}
-		}
-	});
-var $elm$core$Array$builderToArray = F2(
-	function (reverseNodeList, builder) {
-		if (!builder.nodeListSize) {
-			return A4(
-				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.tail),
-				$elm$core$Array$shiftStep,
-				$elm$core$Elm$JsArray$empty,
-				builder.tail);
-		} else {
-			var treeLen = builder.nodeListSize * $elm$core$Array$branchFactor;
-			var depth = $elm$core$Basics$floor(
-				A2($elm$core$Basics$logBase, $elm$core$Array$branchFactor, treeLen - 1));
-			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.nodeList) : builder.nodeList;
-			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.nodeListSize);
-			return A4(
-				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.tail) + treeLen,
-				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
-				tree,
-				builder.tail);
-		}
-	});
-var $elm$core$Basics$idiv = _Basics_idiv;
 var $elm$core$Array$initializeHelp = F5(
 	function (fn, fromIndex, len, nodeList, tail) {
 		initializeHelp:
@@ -4940,7 +6726,6 @@ var $elm$core$Array$initializeHelp = F5(
 			}
 		}
 	});
-var $elm$core$Basics$remainderBy = _Basics_remainderBy;
 var $elm$core$Array$initialize = F2(
 	function (len, fn) {
 		if (len <= 0) {
@@ -4960,7 +6745,22 @@ var $elm$core$Result$isOk = function (result) {
 	}
 };
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Example$no_number = A2(
+var $author$project$ParserTest$mixedfrac = A2(
+	$elm_explorations$test$Test$test,
+	'mixed fraction',
+	function (_v0) {
+		var output = {
+			q: $elm$core$Maybe$Just(1.5),
+			rest: 'whole milk',
+			unit: $elm$core$Maybe$Just('cups')
+		};
+		var input = '1 1/2 cups  whole milk';
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$Parsing$asIngredient(input),
+			output);
+	});
+var $author$project$ParserTest$no_number = A2(
 	$elm_explorations$test$Test$test,
 	'no number',
 	function (_v0) {
@@ -4971,7 +6771,7 @@ var $author$project$Example$no_number = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Example$no_space = A2(
+var $author$project$ParserTest$no_space = A2(
 	$elm_explorations$test$Test$test,
 	'no space',
 	function (_v0) {
@@ -4986,7 +6786,7 @@ var $author$project$Example$no_space = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Example$no_trailing = A2(
+var $author$project$ParserTest$no_trailing = A2(
 	$elm_explorations$test$Test$test,
 	'no trailing',
 	function (_v0) {
@@ -5001,7 +6801,7 @@ var $author$project$Example$no_trailing = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Example$no_unit = A2(
+var $author$project$ParserTest$no_unit = A2(
 	$elm_explorations$test$Test$test,
 	'no unit',
 	function (_v0) {
@@ -5016,9 +6816,9 @@ var $author$project$Example$no_unit = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Example$numWord_1 = A2(
+var $author$project$ParserTest$numWord_1 = A2(
 	$elm_explorations$test$Test$test,
-	'1.5',
+	'word 1.5',
 	function (_v0) {
 		var output = $elm$core$Result$Ok(
 			$elm$core$Maybe$Just(1.5));
@@ -5028,9 +6828,9 @@ var $author$project$Example$numWord_1 = A2(
 			A2($elm$parser$Parser$run, $author$project$Parsing$numWord, input),
 			output);
 	});
-var $author$project$Example$numWord_2 = A2(
+var $author$project$ParserTest$numWord_2 = A2(
 	$elm_explorations$test$Test$test,
-	'100 1000',
+	'word 100 1000',
 	function (_v0) {
 		var output = $elm$core$Result$Ok($elm$core$Maybe$Nothing);
 		var input = 'a hundred thousand';
@@ -5039,9 +6839,9 @@ var $author$project$Example$numWord_2 = A2(
 			A2($elm$parser$Parser$run, $author$project$Parsing$numWord, input),
 			output);
 	});
-var $author$project$Example$numWord_3 = A2(
+var $author$project$ParserTest$numWord_3 = A2(
 	$elm_explorations$test$Test$test,
-	'122',
+	'word 122',
 	function (_v0) {
 		var output = $elm$core$Result$Ok(
 			$elm$core$Maybe$Just(122));
@@ -5110,16 +6910,10 @@ var $elm_explorations$test$Test$Runner$Thunk = function (a) {
 var $elm_explorations$test$Test$Runner$emptyDistribution = function (seed) {
 	return {all: _List_Nil, only: _List_Nil, seed: seed, skipped: _List_Nil};
 };
-var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var $elm$core$Bitwise$xor = _Bitwise_xor;
 var $elm_explorations$test$Test$Runner$fnvHash = F2(
 	function (a, b) {
 		return ((a ^ b) * 16777619) >>> 0;
 	});
-var $elm$core$String$foldr = _String_foldr;
-var $elm$core$String$toList = function (string) {
-	return A3($elm$core$String$foldr, $elm$core$List$cons, _List_Nil, string);
-};
 var $elm_explorations$test$Test$Runner$fnvHashString = F2(
 	function (hash, str) {
 		return A3(
@@ -5132,56 +6926,6 @@ var $elm_explorations$test$Test$Runner$fnvHashString = F2(
 				$elm$core$String$toList(str)));
 	});
 var $elm_explorations$test$Test$Runner$fnvInit = 2166136261;
-var $elm$random$Random$Generator = function (a) {
-	return {$: 'Generator', a: a};
-};
-var $elm$random$Random$Seed = F2(
-	function (a, b) {
-		return {$: 'Seed', a: a, b: b};
-	});
-var $elm$core$Bitwise$and = _Bitwise_and;
-var $elm$random$Random$next = function (_v0) {
-	var state0 = _v0.a;
-	var incr = _v0.b;
-	return A2($elm$random$Random$Seed, ((state0 * 1664525) + incr) >>> 0, incr);
-};
-var $elm$random$Random$peel = function (_v0) {
-	var state = _v0.a;
-	var word = (state ^ (state >>> ((state >>> 28) + 4))) * 277803737;
-	return ((word >>> 22) ^ word) >>> 0;
-};
-var $elm$random$Random$int = F2(
-	function (a, b) {
-		return $elm$random$Random$Generator(
-			function (seed0) {
-				var _v0 = (_Utils_cmp(a, b) < 0) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
-				var lo = _v0.a;
-				var hi = _v0.b;
-				var range = (hi - lo) + 1;
-				if (!((range - 1) & range)) {
-					return _Utils_Tuple2(
-						(((range - 1) & $elm$random$Random$peel(seed0)) >>> 0) + lo,
-						$elm$random$Random$next(seed0));
-				} else {
-					var threshhold = (((-range) >>> 0) % range) >>> 0;
-					var accountForBias = function (seed) {
-						accountForBias:
-						while (true) {
-							var x = $elm$random$Random$peel(seed);
-							var seedN = $elm$random$Random$next(seed);
-							if (_Utils_cmp(x, threshhold) < 0) {
-								var $temp$seed = seedN;
-								seed = $temp$seed;
-								continue accountForBias;
-							} else {
-								return _Utils_Tuple2((x % range) + lo, seedN);
-							}
-						}
-					};
-					return accountForBias(seed0);
-				}
-			});
-	});
 var $elm$random$Random$map3 = F4(
 	function (func, _v0, _v1, _v2) {
 		var genA = _v0.a;
@@ -5204,11 +6948,6 @@ var $elm$random$Random$map3 = F4(
 			});
 	});
 var $elm$core$Bitwise$or = _Bitwise_or;
-var $elm$random$Random$step = F2(
-	function (_v0, seed) {
-		var generator = _v0.a;
-		return generator(seed);
-	});
 var $elm$random$Random$independentSeed = $elm$random$Random$Generator(
 	function (seed0) {
 		var makeIndependentSeed = F3(
@@ -5751,11 +7490,6 @@ var $author$project$Console$Text$Texts = function (a) {
 	return {$: 'Texts', a: a};
 };
 var $author$project$Console$Text$concat = $author$project$Console$Text$Texts;
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
 var $author$project$Console$Text$Dark = {$: 'Dark'};
 var $author$project$Console$Text$dark = function (txt) {
 	if (txt.$ === 'Text') {
@@ -5826,43 +7560,6 @@ var $author$project$Test$Reporter$Console$failureLabelsToText = A2(
 			$author$project$Test$Reporter$Console$withChar(
 				_Utils_chr('✗')))),
 	$author$project$Console$Text$concat);
-var $elm$core$Array$fromListHelp = F3(
-	function (list, nodeList, nodeListSize) {
-		fromListHelp:
-		while (true) {
-			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, list);
-			var jsArray = _v0.a;
-			var remainingItems = _v0.b;
-			if (_Utils_cmp(
-				$elm$core$Elm$JsArray$length(jsArray),
-				$elm$core$Array$branchFactor) < 0) {
-				return A2(
-					$elm$core$Array$builderToArray,
-					true,
-					{nodeList: nodeList, nodeListSize: nodeListSize, tail: jsArray});
-			} else {
-				var $temp$list = remainingItems,
-					$temp$nodeList = A2(
-					$elm$core$List$cons,
-					$elm$core$Array$Leaf(jsArray),
-					nodeList),
-					$temp$nodeListSize = nodeListSize + 1;
-				list = $temp$list;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue fromListHelp;
-			}
-		}
-	});
-var $elm$core$Array$fromList = function (list) {
-	if (!list.b) {
-		return $elm$core$Array$empty;
-	} else {
-		return A3($elm$core$Array$fromListHelp, list, _List_Nil, 0);
-	}
-};
-var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
-var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
 var $elm$core$Array$getHelp = F3(
 	function (shift, index, tree) {
 		getHelp:
@@ -5884,10 +7581,6 @@ var $elm$core$Array$getHelp = F3(
 			}
 		}
 	});
-var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
-var $elm$core$Array$tailIndex = function (len) {
-	return (len >>> 5) << 5;
-};
 var $elm$core$Array$get = F2(
 	function (index, _v0) {
 		var len = _v0.a;
@@ -5900,10 +7593,6 @@ var $elm$core$Array$get = F2(
 			A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, tail)) : $elm$core$Maybe$Just(
 			A3($elm$core$Array$getHelp, startShift, index, tree)));
 	});
-var $elm$core$Array$length = function (_v0) {
-	var len = _v0.a;
-	return len;
-};
 var $author$project$Test$Runner$Node$Vendor$Diff$Added = function (a) {
 	return {$: 'Added', a: a};
 };
@@ -6015,7 +7704,6 @@ var $author$project$Test$Runner$Node$Vendor$Diff$Continue = function (a) {
 var $author$project$Test$Runner$Node$Vendor$Diff$Found = function (a) {
 	return {$: 'Found', a: a};
 };
-var $elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
 var $elm$core$Array$setHelp = F4(
 	function (shift, index, value, tree) {
 		var pos = $elm$core$Array$bitMask & (index >>> shift);
@@ -6303,27 +7991,6 @@ var $author$project$Test$Reporter$Highlightable$diffLists = F2(
 			$elm$core$List$concatMap,
 			$author$project$Test$Reporter$Highlightable$fromDiff,
 			A2($author$project$Test$Runner$Node$Vendor$Diff$diff, expected, actual));
-	});
-var $elm$core$List$drop = F2(
-	function (n, list) {
-		drop:
-		while (true) {
-			if (n <= 0) {
-				return list;
-			} else {
-				if (!list.b) {
-					return list;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs;
-					n = $temp$n;
-					list = $temp$list;
-					continue drop;
-				}
-			}
-		}
 	});
 var $author$project$Test$Reporter$Console$Format$isFloat = function (str) {
 	var _v0 = $elm$core$String$toFloat(str);
@@ -7911,7 +9578,494 @@ var $author$project$Test$Runner$Node$run = F2(
 				update: $author$project$Test$Runner$Node$update
 			});
 	});
-var $author$project$Example$word = A2(
+var $myrho$elm_round$Round$addSign = F2(
+	function (signed, str) {
+		var isNotZero = A2(
+			$elm$core$List$any,
+			function (c) {
+				return (!_Utils_eq(
+					c,
+					_Utils_chr('0'))) && (!_Utils_eq(
+					c,
+					_Utils_chr('.')));
+			},
+			$elm$core$String$toList(str));
+		return _Utils_ap(
+			(signed && isNotZero) ? '-' : '',
+			str);
+	});
+var $myrho$elm_round$Round$increaseNum = function (_v0) {
+	var head = _v0.a;
+	var tail = _v0.b;
+	if (_Utils_eq(
+		head,
+		_Utils_chr('9'))) {
+		var _v1 = $elm$core$String$uncons(tail);
+		if (_v1.$ === 'Nothing') {
+			return '01';
+		} else {
+			var headtail = _v1.a;
+			return A2(
+				$elm$core$String$cons,
+				_Utils_chr('0'),
+				$myrho$elm_round$Round$increaseNum(headtail));
+		}
+	} else {
+		var c = $elm$core$Char$toCode(head);
+		return ((c >= 48) && (c < 57)) ? A2(
+			$elm$core$String$cons,
+			$elm$core$Char$fromCode(c + 1),
+			tail) : '0';
+	}
+};
+var $elm$core$Basics$isInfinite = _Basics_isInfinite;
+var $elm$core$Basics$isNaN = _Basics_isNaN;
+var $elm$core$String$length = _String_length;
+var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var $elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			$elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var $elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3($elm$core$String$repeatHelp, n, chunk, '');
+	});
+var $elm$core$String$padRight = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			string,
+			A2(
+				$elm$core$String$repeat,
+				n - $elm$core$String$length(string),
+				$elm$core$String$fromChar(_char)));
+	});
+var $elm$core$String$reverse = _String_reverse;
+var $myrho$elm_round$Round$splitComma = function (str) {
+	var _v0 = A2($elm$core$String$split, '.', str);
+	if (_v0.b) {
+		if (_v0.b.b) {
+			var before = _v0.a;
+			var _v1 = _v0.b;
+			var after = _v1.a;
+			return _Utils_Tuple2(before, after);
+		} else {
+			var before = _v0.a;
+			return _Utils_Tuple2(before, '0');
+		}
+	} else {
+		return _Utils_Tuple2('0', '0');
+	}
+};
+var $elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			$elm$core$String$slice,
+			n,
+			$elm$core$String$length(string),
+			string);
+	});
+var $elm$core$Tuple$mapFirst = F2(
+	function (func, _v0) {
+		var x = _v0.a;
+		var y = _v0.b;
+		return _Utils_Tuple2(
+			func(x),
+			y);
+	});
+var $elm$core$String$startsWith = _String_startsWith;
+var $myrho$elm_round$Round$toDecimal = function (fl) {
+	var _v0 = A2(
+		$elm$core$String$split,
+		'e',
+		$elm$core$String$fromFloat(
+			$elm$core$Basics$abs(fl)));
+	if (_v0.b) {
+		if (_v0.b.b) {
+			var num = _v0.a;
+			var _v1 = _v0.b;
+			var exp = _v1.a;
+			var e = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				$elm$core$String$toInt(
+					A2($elm$core$String$startsWith, '+', exp) ? A2($elm$core$String$dropLeft, 1, exp) : exp));
+			var _v2 = $myrho$elm_round$Round$splitComma(num);
+			var before = _v2.a;
+			var after = _v2.b;
+			var total = _Utils_ap(before, after);
+			var zeroed = (e < 0) ? A2(
+				$elm$core$Maybe$withDefault,
+				'0',
+				A2(
+					$elm$core$Maybe$map,
+					function (_v3) {
+						var a = _v3.a;
+						var b = _v3.b;
+						return a + ('.' + b);
+					},
+					A2(
+						$elm$core$Maybe$map,
+						$elm$core$Tuple$mapFirst($elm$core$String$fromChar),
+						$elm$core$String$uncons(
+							_Utils_ap(
+								A2(
+									$elm$core$String$repeat,
+									$elm$core$Basics$abs(e),
+									'0'),
+								total))))) : A3(
+				$elm$core$String$padRight,
+				e + 1,
+				_Utils_chr('0'),
+				total);
+			return _Utils_ap(
+				(fl < 0) ? '-' : '',
+				zeroed);
+		} else {
+			var num = _v0.a;
+			return _Utils_ap(
+				(fl < 0) ? '-' : '',
+				num);
+		}
+	} else {
+		return '';
+	}
+};
+var $myrho$elm_round$Round$roundFun = F3(
+	function (functor, s, fl) {
+		if ($elm$core$Basics$isInfinite(fl) || $elm$core$Basics$isNaN(fl)) {
+			return $elm$core$String$fromFloat(fl);
+		} else {
+			var signed = fl < 0;
+			var _v0 = $myrho$elm_round$Round$splitComma(
+				$myrho$elm_round$Round$toDecimal(
+					$elm$core$Basics$abs(fl)));
+			var before = _v0.a;
+			var after = _v0.b;
+			var r = $elm$core$String$length(before) + s;
+			var normalized = _Utils_ap(
+				A2($elm$core$String$repeat, (-r) + 1, '0'),
+				A3(
+					$elm$core$String$padRight,
+					r,
+					_Utils_chr('0'),
+					_Utils_ap(before, after)));
+			var totalLen = $elm$core$String$length(normalized);
+			var roundDigitIndex = A2($elm$core$Basics$max, 1, r);
+			var increase = A2(
+				functor,
+				signed,
+				A3($elm$core$String$slice, roundDigitIndex, totalLen, normalized));
+			var remains = A3($elm$core$String$slice, 0, roundDigitIndex, normalized);
+			var num = increase ? $elm$core$String$reverse(
+				A2(
+					$elm$core$Maybe$withDefault,
+					'1',
+					A2(
+						$elm$core$Maybe$map,
+						$myrho$elm_round$Round$increaseNum,
+						$elm$core$String$uncons(
+							$elm$core$String$reverse(remains))))) : remains;
+			var numLen = $elm$core$String$length(num);
+			var numZeroed = (num === '0') ? num : ((s <= 0) ? _Utils_ap(
+				num,
+				A2(
+					$elm$core$String$repeat,
+					$elm$core$Basics$abs(s),
+					'0')) : ((_Utils_cmp(
+				s,
+				$elm$core$String$length(after)) < 0) ? (A3($elm$core$String$slice, 0, numLen - s, num) + ('.' + A3($elm$core$String$slice, numLen - s, numLen, num))) : _Utils_ap(
+				before + '.',
+				A3(
+					$elm$core$String$padRight,
+					s,
+					_Utils_chr('0'),
+					after))));
+			return A2($myrho$elm_round$Round$addSign, signed, numZeroed);
+		}
+	});
+var $myrho$elm_round$Round$ceiling = $myrho$elm_round$Round$roundFun(
+	F2(
+		function (signed, str) {
+			var _v0 = $elm$core$String$uncons(str);
+			if (_v0.$ === 'Nothing') {
+				return false;
+			} else {
+				if ('0' === _v0.a.a.valueOf()) {
+					var _v1 = _v0.a;
+					var rest = _v1.b;
+					return (!signed) && A2(
+						$elm$core$List$any,
+						$elm$core$Basics$neq(
+							_Utils_chr('0')),
+						$elm$core$String$toList(rest));
+				} else {
+					return !signed;
+				}
+			}
+		}));
+var $joshforisha$elm_inflect$Inflect$singulars = $elm$core$List$reverse(
+	_Utils_ap(
+		_List_fromArray(
+			[
+				A2($joshforisha$elm_inflect$Inflect$replace0, 's$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(ss)$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(n)ews$', 'ews'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([ti])a$', 'um'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)(sis|ses)$', 'sis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(^analy)(sis|ses)$', 'sis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([^f])ves$', 'fe'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(hive)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(tive)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([lr])ves$', 'f'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '([^aeiouy]|qu)ies$', 'y'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(s)eries$', 'eries'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(m)ovies$', 'ovie'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(x|ch|ss|sh)es$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(m|l)ice$', 'ouse'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(bus)(es)?$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(o)es$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(shoe)s$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(cris|test)(is|es)$', 'is'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(a)x[ie]s$', 'xis'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(octop|vir)(us|i)$', 'us'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(alias|status)(es)?$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '^(ox)en', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(vert|ind)ices$', 'ex'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(matr)ices$', 'ix'),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(quiz)zes$', ''),
+				A2($joshforisha$elm_inflect$Inflect$replace1, '(database)s$', '')
+			]),
+		$joshforisha$elm_inflect$Inflect$irregulars(false)));
+var $joshforisha$elm_inflect$Inflect$singularize = function (string) {
+	return A2(
+		$elm$core$List$member,
+		$elm$core$String$toLower(string),
+		$joshforisha$elm_inflect$Inflect$uncountables) ? string : A2($joshforisha$elm_inflect$Inflect$apply, $joshforisha$elm_inflect$Inflect$singulars, string);
+};
+var $elm$core$Basics$round = _Basics_round;
+var $author$project$HomePage$twoDecimal = function (x) {
+	return $elm$core$Basics$round(x * 100) / 100;
+};
+var $author$project$HomePage$stringizeItem = function (_v0) {
+	var q = _v0.q;
+	var unit = _v0.unit;
+	var rest = _v0.rest;
+	var _v1 = _Utils_Tuple2(q, unit);
+	if (_v1.a.$ === 'Nothing') {
+		if (_v1.b.$ === 'Nothing') {
+			var _v2 = _v1.a;
+			var _v3 = _v1.b;
+			return $elm$core$String$isEmpty(rest) ? '-' : ('Some ' + rest);
+		} else {
+			var _v4 = _v1.a;
+			var u = _v1.b.a;
+			return '~ ' + (u + (' ' + rest));
+		}
+	} else {
+		if (_v1.b.$ === 'Nothing') {
+			var a = _v1.a.a;
+			var _v5 = _v1.b;
+			var v = A2($myrho$elm_round$Round$ceiling, 0, a / 1000);
+			var real = $elm$core$String$fromFloat(
+				$author$project$HomePage$twoDecimal(a / 1000));
+			var exact = _Utils_eq(v, real) ? '' : (' (exact quantity: ' + (real + ')'));
+			return ((v === '1') || (rest === '')) ? (v + (' ' + ($joshforisha$elm_inflect$Inflect$singularize(rest) + exact))) : (v + (' ' + ($joshforisha$elm_inflect$Inflect$pluralize(rest) + exact)));
+		} else {
+			var a = _v1.a.a;
+			var u = _v1.b.a;
+			return $elm$core$String$fromFloat(
+				$author$project$HomePage$twoDecimal(a / 1000)) + (' ' + (u + (' ' + rest)));
+		}
+	}
+};
+var $author$project$HelperTest$stringize_1 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize empty',
+	function (_v0) {
+		var output = '-';
+		var input = {q: $elm$core$Maybe$Nothing, rest: '', unit: $elm$core$Maybe$Nothing};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_2 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize almost empty',
+	function (_v0) {
+		var output = 'Some watermelon';
+		var input = {q: $elm$core$Maybe$Nothing, rest: 'watermelon', unit: $elm$core$Maybe$Nothing};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_3 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize unit only',
+	function (_v0) {
+		var output = '~ tbsp. salt';
+		var input = {
+			q: $elm$core$Maybe$Nothing,
+			rest: 'salt',
+			unit: $elm$core$Maybe$Just('tbsp.')
+		};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_4 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize 1 coconut',
+	function (_v0) {
+		var output = '1 coconut';
+		var input = {
+			q: $elm$core$Maybe$Just(1000),
+			rest: 'coconut',
+			unit: $elm$core$Maybe$Nothing
+		};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_5 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize 2.5 coconuts',
+	function (_v0) {
+		var output = '3 coconuts (exact quantity: 2.5)';
+		var input = {
+			q: $elm$core$Maybe$Just(2500),
+			rest: 'coconut',
+			unit: $elm$core$Maybe$Nothing
+		};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_6 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize 10 coconuts',
+	function (_v0) {
+		var output = '10 coconuts';
+		var input = {
+			q: $elm$core$Maybe$Just(10000),
+			rest: 'coconut',
+			unit: $elm$core$Maybe$Nothing
+		};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $author$project$HelperTest$stringize_7 = A2(
+	$elm_explorations$test$Test$test,
+	'stringize full',
+	function (_v0) {
+		var output = '3.12 ounce flour';
+		var input = {
+			q: $elm$core$Maybe$Just(3120),
+			rest: 'flour',
+			unit: $elm$core$Maybe$Just('ounce')
+		};
+		return A2(
+			$elm_explorations$test$Expect$equal,
+			$author$project$HomePage$stringizeItem(input),
+			output);
+	});
+var $elm_explorations$test$Expect$Absolute = function (a) {
+	return {$: 'Absolute', a: a};
+};
+var $elm_explorations$test$Test$Runner$Failure$Comparison = F2(
+	function (a, b) {
+		return {$: 'Comparison', a: a, b: b};
+	});
+var $elm_explorations$test$Expect$compareWith = $elm_explorations$test$Expect$testWith($elm_explorations$test$Test$Runner$Failure$Comparison);
+var $elm_explorations$test$Expect$absolute = function (tolerance) {
+	switch (tolerance.$) {
+		case 'Absolute':
+			var val = tolerance.a;
+			return val;
+		case 'AbsoluteOrRelative':
+			var val = tolerance.a;
+			return val;
+		default:
+			return 0;
+	}
+};
+var $elm_explorations$test$Expect$relative = function (tolerance) {
+	switch (tolerance.$) {
+		case 'Relative':
+			var val = tolerance.a;
+			return val;
+		case 'AbsoluteOrRelative':
+			var val = tolerance.b;
+			return val;
+		default:
+			return 0;
+	}
+};
+var $elm_explorations$test$Expect$nonNegativeToleranceError = F3(
+	function (tolerance, name, result) {
+		return (($elm_explorations$test$Expect$absolute(tolerance) < 0) && ($elm_explorations$test$Expect$relative(tolerance) < 0)) ? $elm_explorations$test$Test$Expectation$fail(
+			{description: 'Expect.' + (name + ' was given negative absolute and relative tolerances'), reason: $elm_explorations$test$Test$Runner$Failure$Custom}) : (($elm_explorations$test$Expect$absolute(tolerance) < 0) ? $elm_explorations$test$Test$Expectation$fail(
+			{description: 'Expect.' + (name + ' was given a negative absolute tolerance'), reason: $elm_explorations$test$Test$Runner$Failure$Custom}) : (($elm_explorations$test$Expect$relative(tolerance) < 0) ? $elm_explorations$test$Test$Expectation$fail(
+			{description: 'Expect.' + (name + ' was given a negative relative tolerance'), reason: $elm_explorations$test$Test$Runner$Failure$Custom}) : result));
+	});
+var $elm_explorations$test$Expect$withinCompare = F3(
+	function (tolerance, a, b) {
+		var withinRelativeTolerance = ((_Utils_cmp(
+			a - $elm$core$Basics$abs(
+				a * $elm_explorations$test$Expect$relative(tolerance)),
+			b) < 1) && (_Utils_cmp(
+			b,
+			a + $elm$core$Basics$abs(
+				a * $elm_explorations$test$Expect$relative(tolerance))) < 1)) || ((_Utils_cmp(
+			b - $elm$core$Basics$abs(
+				b * $elm_explorations$test$Expect$relative(tolerance)),
+			a) < 1) && (_Utils_cmp(
+			a,
+			b + $elm$core$Basics$abs(
+				b * $elm_explorations$test$Expect$relative(tolerance))) < 1));
+		var withinAbsoluteTolerance = (_Utils_cmp(
+			a - $elm_explorations$test$Expect$absolute(tolerance),
+			b) < 1) && (_Utils_cmp(
+			b,
+			a + $elm_explorations$test$Expect$absolute(tolerance)) < 1);
+		return _Utils_eq(a, b) || (withinAbsoluteTolerance || withinRelativeTolerance);
+	});
+var $elm_explorations$test$Expect$within = F3(
+	function (tolerance, lower, upper) {
+		return A3(
+			$elm_explorations$test$Expect$nonNegativeToleranceError,
+			tolerance,
+			'within',
+			A4(
+				$elm_explorations$test$Expect$compareWith,
+				'Expect.within ' + $elm_explorations$test$Test$Internal$toString(tolerance),
+				$elm_explorations$test$Expect$withinCompare(tolerance),
+				lower,
+				upper));
+	});
+var $author$project$HelperTest$twoDecimal_ = A2(
+	$elm_explorations$test$Test$test,
+	'round to two decimals',
+	function (_v0) {
+		var output = 0.67;
+		var input = 2 / 3;
+		return A3(
+			$elm_explorations$test$Expect$within,
+			$elm_explorations$test$Expect$Absolute(0.000000001),
+			output,
+			$author$project$HomePage$twoDecimal(input));
+	});
+var $author$project$ParserTest$word = A2(
 	$elm_explorations$test$Test$test,
 	'word',
 	function (_v0) {
@@ -7926,29 +10080,34 @@ var $author$project$Example$word = A2(
 			$author$project$Parsing$asIngredient(input),
 			output);
 	});
-var $author$project$Test$Generated$Main3097159114$main = A2(
+var $author$project$Test$Generated$Main2471897840$main = A2(
 	$author$project$Test$Runner$Node$run,
 	{
 		paths: _List_fromArray(
-			['C:\\Users\\t_abc\\OneDrive - Pomona College\\muitanprasert-rationalizer\\tests\\Example.elm']),
+			['C:\\Users\\t_abc\\OneDrive - Pomona College\\muitanprasert-rationalizer\\tests\\HelperTest.elm', 'C:\\Users\\t_abc\\OneDrive - Pomona College\\muitanprasert-rationalizer\\tests\\ParserTest.elm']),
 		processes: 4,
 		report: $author$project$Test$Reporter$Reporter$ConsoleReport($author$project$Console$Text$UseColor),
 		runs: $elm$core$Maybe$Nothing,
-		seed: 52000017429737
+		seed: 138812427739658
 	},
 	$elm_explorations$test$Test$concat(
 		_List_fromArray(
 			[
 				A2(
 				$elm_explorations$test$Test$describe,
-				'Example',
+				'ParserTest',
 				_List_fromArray(
-					[$author$project$Example$bad_number_1, $author$project$Example$bad_number_2, $author$project$Example$floating, $author$project$Example$frac, $author$project$Example$full, $author$project$Example$no_number, $author$project$Example$no_space, $author$project$Example$no_trailing, $author$project$Example$no_unit, $author$project$Example$numWord_1, $author$project$Example$numWord_2, $author$project$Example$numWord_3, $author$project$Example$word]))
+					[$author$project$ParserTest$bad_number_1, $author$project$ParserTest$bad_number_2, $author$project$ParserTest$floating, $author$project$ParserTest$frac, $author$project$ParserTest$full, $author$project$ParserTest$mixedfrac, $author$project$ParserTest$no_number, $author$project$ParserTest$no_space, $author$project$ParserTest$no_trailing, $author$project$ParserTest$no_unit, $author$project$ParserTest$numWord_1, $author$project$ParserTest$numWord_2, $author$project$ParserTest$numWord_3, $author$project$ParserTest$word])),
+				A2(
+				$elm_explorations$test$Test$describe,
+				'HelperTest',
+				_List_fromArray(
+					[$author$project$HelperTest$deleteAt_, $author$project$HelperTest$ingredientize_, $author$project$HelperTest$stringize_1, $author$project$HelperTest$stringize_2, $author$project$HelperTest$stringize_3, $author$project$HelperTest$stringize_4, $author$project$HelperTest$stringize_5, $author$project$HelperTest$stringize_6, $author$project$HelperTest$stringize_7, $author$project$HelperTest$twoDecimal_]))
 			])));
-_Platform_export({'Test':{'Generated':{'Main3097159114':{'init':$author$project$Test$Generated$Main3097159114$main($elm$json$Json$Decode$int)(0)}}}});}(this));
+_Platform_export({'Test':{'Generated':{'Main2471897840':{'init':$author$project$Test$Generated$Main2471897840$main($elm$json$Json$Decode$int)(0)}}}});}(this));
 return this.Elm;
 })({});
-var pipeFilename = "\\\\.\\pipe\\elm_test-5256-1";
+var pipeFilename = "\\\\.\\pipe\\elm_test-228480-1";
 // Make sure necessary things are defined.
 if (typeof Elm === "undefined") {
   throw "test runner config error: Elm is not defined. Make sure you provide a file compiled by Elm!";

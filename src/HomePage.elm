@@ -34,34 +34,6 @@ type alias Ingredient =
     , rest : String }
 
 
-stringizeItem : Ingredient -> String
-stringizeItem { q, unit, rest } =
-    case ( q, unit ) of
-        ( Nothing, Nothing ) ->
-            "Some " ++ rest
-
-        ( Nothing, Just u ) ->
-            "~" ++ u ++ " " ++ rest
-
-        ( Just a, Nothing ) ->
-            let
-                v =
-                    Round.ceiling 0 (a / 1000)
-
-                real =
-                    String.fromFloat (twoDecimal (a / 1000))
-            in
-            if v == "1" || rest == "" then
-                v ++ " " ++ singularize rest ++ " (use " ++ real ++ ")"
-
-            else
-                v ++ " " ++ pluralize rest ++ " (use " ++ real ++ ")"
-
-        ( Just a, Just u ) ->
-            String.fromFloat (twoDecimal (a / 1000)) ++ " " ++ u ++ " " ++ rest
-
-
-
 -- SYSTEM
 
 
@@ -181,6 +153,45 @@ update message model =
 
         ShowWarning items ->
             ( { model | warningText = illegalInput items }, Cmd.none )
+
+
+
+-- HELPER FUNCTIONS
+
+
+stringizeItem : Ingredient -> String
+stringizeItem { q, unit, rest } =
+    case ( q, unit ) of
+        ( Nothing, Nothing ) ->
+            if String.isEmpty rest
+            then "-"
+            else "Some " ++ rest
+
+        ( Nothing, Just u ) ->
+            "~ " ++ u ++ " " ++ rest
+
+        ( Just a, Nothing ) ->
+            let
+                v =
+                    Round.ceiling 0 (a / 1000)
+
+                real =
+                    String.fromFloat (twoDecimal (a / 1000))
+
+                exact =
+                    if v == real
+                    then ""
+                    else " (exact quantity: " ++ real ++ ")"
+                
+            in
+            if v == "1" || rest == ""
+            then
+                v ++ " " ++ singularize rest ++ exact
+            else
+                v ++ " " ++ pluralize rest ++ exact
+
+        ( Just a, Just u ) ->
+            String.fromFloat (twoDecimal (a / 1000)) ++ " " ++ u ++ " " ++ rest
 
 
 deleteAt : Int -> List a -> List a
@@ -375,6 +386,7 @@ ghostView dnd items =
 
 -- STYLE
 
+orange : String
 orange = "#dc9a39"
 
 handleStyles : String -> List (Html.Attribute msg)

@@ -10,8 +10,8 @@ Implemented in Elm (tentative).
 * Parse input strings in the amount, unit, and the rest, assuming that order
 * Ingredients without a quantity is unscalable. Ingredients without a unit is only scalable to integers.
 * Input number of servings (floating points) and display in-place the scaled quantities with appropriate units
+* Display error messages or display ingredients with a different format based on the input
 
 ## Notes
 * Travis CI building with version 0.19.0
 * Supported format for quantity: integer, float, fraction, mixed fraction, number words (limited)
-* Next steps: add more tests

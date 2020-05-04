@@ -5,7 +5,7 @@ Problem: Can't get Travis CI to build the very simple version
 
 2020-04-24: DnDList requires elm 0.19.1. Travis CI breaks again.
 
-2020-04-27: Found a solution on GitHub issues. The version should be latest-0.19.1.
+2020-04-27: Found a solution on GitHub issues. The version should be latest-0.19.1. Building on Travis CI now.
 
 
 # BUG 2020-04-12 #2
@@ -13,7 +13,7 @@ Problem: If quantity is illegal number, "sometimes" parser wouldn't read the res
 
 2020-04-12: Works if the quantity is missing altogether. Still returns rest="" if there is number but it's wrong (e.g. 2.2.4 cups of water)
 
-2020-04-15: Accidentally solved with the addition backtrackable to facilitate number words functionality
+2020-04-15: Solved with the addition backtrackable to facilitate number words functionality
 
 
 # BUG 2020-04-21 #3
@@ -23,4 +23,4 @@ Problem: DnDList messes up the rest of interface.
 
 2020-04-22: Converted UI Elements to Html elements. The interface is working again, but rearranging still doesn't work. 
 
-2020-04-23: Rewrote the code from scratch, copying small chunks over; it solved the problem.
+2020-04-23: Rewrote the code from scratch, copying small chunks over. Problem solved.
